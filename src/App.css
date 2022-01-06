@@ -1,0 +1,61 @@
+nav{
+    height:45px;
+}
+
+
+.container li
+{
+    font-size: 18px;
+}
+
+.label{
+    
+    color: #cfd3ec;
+    cursor: pointer;
+}
+
+.label:hover{
+    color:white;
+}
+
+.scrollable-menu {
+    height: auto;
+    max-height: 200px;
+    overflow-x: hidden;
+}
+
+/* ---------for pagination------------------ */
+.paginationBttns {
+    /* width: 50%;
+    height: 30px; */
+    list-style: none;
+    display: flex;
+    justify-content:right;
+    margin-top: 15px;
+    /* margin-left: 400px; */
+    
+  }
+  
+  .paginationBttns a {
+    padding: 10px;
+    margin: 8px;
+    border-radius: 5px;
+    border: 1px solid #b0b0b3;
+    cursor: pointer;
+    color: #007bff;
+  }
+  
+  .paginationBttns a:hover {
+    color: rgb(10, 66, 131);
+  }
+  
+  .paginationActive a {
+    color: white;
+    background-color: #007bff;
+  }
+  
+  
+/* image for no question */
+/* .img{
+  height: 50px;
+} */
