@@ -1,8 +1,7 @@
-import React,{useEffect,useRef,useState} from 'react'
-import { useLocation, useNavigate } from 'react-router-dom';
+import React,{useState} from 'react'
+import {useNavigate } from 'react-router-dom';
 import http from './http';
 import Form from './Form';
-import QuestionList from './QuestionList';
 
 function AddQuestionForm({handleDisplayNavbar}) 
 {
@@ -18,7 +17,7 @@ function AddQuestionForm({handleDisplayNavbar})
         questionText : '' ,
         options : Array(4).fill({})
     })
-    
+    let flag = true
     
     
     //---------------------------Display Navbar--------------------------
@@ -54,7 +53,7 @@ function AddQuestionForm({handleDisplayNavbar})
         // console.log(error);
         if(field==="qText")
         {
-            if(val == '')
+            if(val === '')
                 {
                     document.getElementById('qText').className = "form-control is-invalid"
                 }
@@ -62,6 +61,35 @@ function AddQuestionForm({handleDisplayNavbar})
                 {
                     document.getElementById('qText').className = "form-control"
                 }
+        }
+        else if(field === 'duplicateOption')
+        {
+                if(val !== '')
+                {  
+                    error.style.display="block"
+                    
+                }
+                else
+                {
+                    error.style.display="none"
+                    
+                }
+            
+        }
+        else if(field === 'selectOption')
+        {
+            
+                if(val !== '')
+                {  
+                    // error.textContent = `Duplicate options are not allowed.`
+                    error.style.display="block"                    
+                }
+                else
+                {
+                    error.style.display="none"
+                    flag = true
+                }
+            
         }
         else if(field.includes('Option'))
         {
@@ -73,23 +101,11 @@ function AddQuestionForm({handleDisplayNavbar})
             else
             {
                 error.style.display="none"
+                
             }
             
         }  
-        else if(field == 'radioErr')
-        {
-            
-                if(val != '')
-                {  
-                    error.textContent = `Duplicate options are not allowed.`
-                    error.style.display="block"
-                }
-                else
-                {
-                    error.style.display="none"
-                }
-            
-        }
+        
         else if(val == '' || val === "DEFAULT" )
         {
             
@@ -109,45 +125,92 @@ function AddQuestionForm({handleDisplayNavbar})
             error.style.display="none"
             document.getElementById('Rmarks').className = "form-control "
             document.getElementById('Wmarks').className = "form-control "
-            document.getElementById('qText').className = "form-control"
+            // document.getElementById('qText').className = "form-control"
         }
     }
 
+
+    const valid = () =>
+    {
+        let k=0
+            
+            if(QueObject.subject === '')
+                {
+                    handleError('DEFAULT','Subject')
+                    flag = false
+                }
+
+            if(QueObject.topic === '')
+                {
+                    handleError('DEFAULT','Topic')
+                    flag = false
+                    
+                }
+
+            if(QueObject.type === '')
+                {
+                    handleError('DEFAULT','Type')
+                    flag = false
+                }
+
+            if(QueObject.diffLevel === '')
+                {
+                    handleError('DEFAULT','Difficulty level')
+                    flag = false
+                }           
+                
+            if(QueObject.rightMarks === '')
+                {
+                    handleError('','Right Marks')
+                    flag = false
+                }
+
+            if(QueObject.wrongMarks === '')
+                {
+                    handleError('','Wrong Marks')
+                    flag = false
+                }
+
+            if(QueObject.questionText === '' )
+                {
+                    handleError('','qText')
+                    flag = false
+                }
+            
+            
+                QueObject.options.map((opt,ind)=>            
+                {
+                    // opt.option == '' && handleError('',`Option${ind+1}`)
+                    if(opt.option == '')
+                    {
+                        console.log("option null");
+                        handleError('',`Option${ind+1}`)
+                        flag = false
+                        k=1
+                    }
+                    if(opt.isCorrect === true)
+                    {  
+                        console.log(QueObject);
+                        flag = true
+                        k=1
+                    }                
+                })
+
+            if(k==0)
+            {
+                console.log(flag);
+                handleError('DEFAULT','selectOption')
+                flag = false
+            }
+
+            return flag
+    }
     //------------------------------Post question into api after clicking on save question button-----------------------
     const postQuestion = async() =>
     {
-        
 
-            
-            QueObject.subject === '' && handleError('DEFAULT','Subject')
-            QueObject.topic === '' && handleError('DEFAULT','Topic')
-            QueObject.questionText === '' && handleError('','qText')
-
-            QueObject.options.map((opt,ind)=>            
-                {
-                    opt.option == '' && handleError('',`Option${ind+1}`)
-
-
-                    if(opt.isCorrect === false && opt.option !== '')
-                    {
-                        let error = document.getElementById('radioErr')
-                        error.style.display = "block"
-                        error.textContent = "Please select correct answer from options"
-                        
-                    }
-                })
-            
-
-            let temp = QueObject.options.map((opt,i)=>
-            {
-                if(opt.option==='' || opt.isCorrect === false)
-                    return false
-                
-            })
-
-            console.log(temp);
-            if(QueObject.subject!= '' && QueObject.topic!= '' && QueObject.type!='' && QueObject.diffLevel!='' &&
-                    QueObject.rightMarks!='' && QueObject.wrongMarks!='' && QueObject.questionText!='')
+            console.log(valid())
+            if(valid())
             {
                 await http.post('/questions',QueObject)
                 navigate(-1)
@@ -169,11 +232,7 @@ function AddQuestionForm({handleDisplayNavbar})
                         <i className='bx bx-exit-fullscreen bx-flip-horizontal' onClick={()=>handleOnclick('small')} style={{cursor:'pointer',float:'right'}}></i>}
                 </div>
             
-                <div className="card-body">
-                    {/* <Form props={{Subject,setSubject,Topic,setTopic,Type,setType,DiffLevel,setDiffLevel,
-                        RightMarks,setRightMarks,WrongMarks,setWrongMarks,QuestionText,setQuestionText,OptionObj,setOptionObj,
-                        AllSubject,setAllSubject,AllTopic,setAllTopic,
-                        handleSelectedField,handleChecked,handleChange,AddOption,RemoveOption}}/> */}​
+                <div className="card-body"> 
                     <Form QueObject={QueObject} setQueObject={setQueObject} handleError={handleError} />
                 </div>
 

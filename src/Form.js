@@ -153,12 +153,12 @@ function Form({QueObject,setQueObject,handleError})
         {
             if(opt.option === val) 
             {
-                flag=1 
-                handleError(val,`radioErr`)
+                handleError(val,`duplicateOption`)
             }
+            flag=1 
         })
        
-        flag===0 && handleError('','radioErr')
+        flag===0 && handleError('','duplicateOption')
         QueObject.options[ind].option = val
         setQueObject({...QueObject})
         handleError(val,`Option${ind+1}`)
@@ -191,6 +191,7 @@ function Form({QueObject,setQueObject,handleError})
             setQueObject({...QueObject})
             
         }
+        handleError('','selectOption')
         
     }
     
@@ -219,7 +220,15 @@ function Form({QueObject,setQueObject,handleError})
 
 
     
-    
+    const handleKeys = (evt) =>
+    {
+        var charCode = (evt.which) ? evt.which : window.event.keyCode;
+        console.log(charCode);
+        if ((charCode < 48 || charCode > 57))
+            return true;
+        else
+            return false;
+    }
 
   
     return (
@@ -322,7 +331,7 @@ function Form({QueObject,setQueObject,handleError})
                                 <label> Right Marks  </label>
                             </div>
 
-                            <input type="text" id="Rmarks" className="form-control" onBlur={(e)=>handleError(e.target.value , 'Right marks')} value={QueObject.rightMarks ? QueObject.rightMarks : ''} placeholder={QueObject.rightMarks ? " " :  'Enter right marks'} 
+                            <input type="text" id="Rmarks" className="form-control" onKeyPress={(e)=>handleKeys(e)} onBlur={(e)=>handleError(e.target.value , 'Right marks')} value={QueObject.rightMarks ? QueObject.rightMarks : ''} placeholder={QueObject.rightMarks ? " " :  'Enter right marks'} 
                              onChange={(e)=>handleSelectedField(e.target.value,'rightMarks')}/>
                             <span  id="Right marks" style={{color:"red", float:"left",fontSize:"12px",marginTop:"4px"}}> </span>
                     </div>
@@ -406,7 +415,8 @@ function Form({QueObject,setQueObject,handleError})
                                 Add option 
                         </a>
                     </div>
-                    <span id="radioErr" style={{color:"red", float:"left",fontSize:"12px",marginTop:"4px"}}> </span>
+                    <span id="selectOption" style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}>Please select correct answer from options </span><br/>
+                    <span id="duplicateOption" style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}>Duplicate options are not allowed.</span>
                 </div>      
             </form>
 
