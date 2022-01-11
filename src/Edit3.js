@@ -1,52 +1,262 @@
-import React,{useState,useEffect,useRef} from 'react'
-import './App.css'
-import { useNavigate } from 'react-router-dom'
-import {AiOutlinePlus} from 'react-icons/ai'
+import React,{useState,useEffect} from 'react'
+import {useNavigate,useLocation} from 'react-router-dom';
+import http from './http';
+import Form from './Form';
+import ReactQuill from 'react-quill';
 import {BiX} from 'react-icons/bi'
-import { selectOptions } from '@testing-library/user-event/dist/select-options'
-import NavbarCollapse from 'react-bootstrap/esm/NavbarCollapse'
-import http from './http'
-import QuestionList from './QuestionList'
-import ReactQuill from 'react-quill'
-import '../node_modules/react-quill/dist/quill.snow.css';
+import {AiOutlinePlus} from 'react-icons/ai'
 
 
-
-function Form({QueObject,setQueObject,handleError}) 
+function EditQuestionForm({handleDisplayNavbar}) 
 {
 
-    
     let navigate = useNavigate()
-    let flag = 0
+    let hasError = false ;
+    let [isDuplicateOption,setisDuplicateOption] = useState(false);
+    let flag = 0,s,t
+    let question = useLocation().state.question
+    console.log(question);
+    
+    let [QueObject,setQueObject] = useState({
+        type : question.type ,
+        diffLevel : question.diffLevel ,
+        subject : question.subject ,
+        topic : question.topic ,
+        rightMarks : question.rightMarks ,
+        wrongMarks : question.wrongMarks,
+        questionText : question.questionText ,
+        options : question.options
+    })
+   
     //-----------------------all values from api------------------------
     
     const [AllSubject,setAllSubject] = useState()
     const [AllTopic,setAllTopic] = useState()
     const [richText , setrichText] = useState(false)
-
-
+    let [Subject,setSubject] = useState()
+    let [Topic,setTopic] =useState()
+    
     useEffect(async() => {
            
-        const arr = QueObject.options.map(()=>
-            {
-                return {
-                option : '' ,
-                isCorrect:false ,
-                richTextEditor: false
-                 }
-            }
-         )
-         
-         setQueObject({...QueObject , options : arr})
-
         //to get subject
-        setAllSubject(await http.get('/subjects?term='))
+        let data = await http.get('/subjects?term=')
+        setAllSubject(data)
+        s = data.filter(sub => (sub._id === QueObject.subject))
+        setSubject(s[0].name)
 
         //to get topic
-        setAllTopic(await http.get('/topics?page=1&limit=9007199254740991&term='))
+        let data1 = await http.get('/topics?page=1&limit=9007199254740991&term=')
+        setAllTopic(data1)
+        t = data1.filter(top => top._id === QueObject.topic)
+        setTopic(t[0].name)
     
     }, [])
     
+    // const pattern = /<\/?[a-z][\s\S]*>/i;
+    // let rad = QueObject.options.map((q) => (
+    // {
+    //     ...q, richTextEditor: pattern.test(q.option)
+    // }))
+    
+    // console.log(rad);
+    //---------------------------Display Navbar--------------------------
+
+    const [fullscreen,setfullscreen] = useState(true)
+    const handleOnclick = (value) =>
+    {
+        if(value==='full')
+        {
+            handleDisplayNavbar(false)
+            setfullscreen(false)
+        }
+        else
+        {
+            handleDisplayNavbar(true)
+            setfullscreen(true)
+        }
+    }
+    
+    
+    //------------------------------cancel the new question and goes back to display question---------------------------
+    const handleCancel = () =>
+    {
+        navigate(-1)
+        handleDisplayNavbar(true)
+    }
+    
+    //-------------------------------------to display error message on particular field--------------------------------
+    const handleError = (field , value = '') =>
+    {
+                        
+        let error = document.getElementById(`${field}`)   
+        console.log('value',value)
+        console.log('error',error)
+        if(field === 'CorrectOpt')
+        {
+            if(value !== '')
+                {  
+                   
+                    error.style.display="block"                    
+                }
+                else
+                {
+                    error.style.display="none"
+                    hasError = false
+                }
+            
+        }        
+        else if(field === 'DuplicateOpt')
+        {
+                if(value !== '')
+                {  
+                    error.style.display="block"
+                    setisDuplicateOption(true)
+                }
+                else
+                {
+                    error.style.display="none"
+                    setisDuplicateOption(false)
+                }
+            
+        }           
+        else if(value === '' || value === 'DEFAULT')
+        {
+            
+            if(field === 'Subject' || field === 'Topic' || field === 'Type' || field === 'Difficulty level')
+            {
+                error.style.display = "block"
+            }
+
+            else if(field === 'Right marks' || field === 'Wrong marks' || field === 'qText')
+            {
+                error.style.display = "block"
+                field === 'Right marks' && (document.getElementById('Rmarks').className = "form-control is-invalid")
+                field === 'Wrong marks' && (document.getElementById('Wmarks').className = "form-control is-invalid")
+                field === 'qText' && (error.className = "form-control is-invalid")
+            }
+            else if(field.includes('Option'))
+            {
+                error.style.display="block"
+            }
+
+        } 
+           
+        else
+        {
+            error.style.display = "none"
+            document.getElementById('Rmarks').className = "form-control"
+            document.getElementById('Wmarks').className = "form-control "
+            
+            if(field === 'qText') 
+            {
+                error.className = "form-control";
+                error.style.display = "block"
+            }
+        }
+    }
+    
+    const hasAnyFieldEmpty = () =>
+    {
+        let k=0 , i=0
+            
+            if(QueObject.subject === '')
+                {
+                    handleError('Subject','DEFAULT')
+                    hasError = true
+                }
+
+            if(QueObject.topic === '')
+                {
+                    handleError('Topic','DEFAULT')
+                    hasError = true
+                    
+                }
+
+            if(QueObject.type === '')
+                {
+                    handleError('Type','DEFAULT')
+                    hasError = true
+                }
+
+            if(QueObject.diffLevel === '')
+                {
+                    handleError('Difficulty level','DEFAULT')
+                    hasError = true
+                }           
+                
+            if(QueObject.rightMarks === '')
+                {
+                    handleError('Right Marks','')
+                    hasError = true
+                }
+
+            if(QueObject.wrongMarks === '')
+                {
+                    handleError('Wrong Marks','')
+                    hasError = true
+                }
+
+            if(QueObject.questionText === '' )
+                {
+                    handleError('qText','')
+                    hasError = true
+                }
+            
+            
+                QueObject.options.map((opt,ind)=>            
+                {
+                    // opt.option == '' && handleError('',`Option${ind+1}`)
+                    if(opt.option == '')
+                    {
+                        
+                        handleError(`Option${ind+1}`,'')
+                        hasError = true
+                        k=1
+                    }
+                    else 
+                    {  
+                        if(opt.isCorrect === true)
+                        {
+                            
+                            hasError = false
+                            k=1
+                        }
+                    }                
+                })
+            console.log(hasDuplicateOption);
+            if(hasDuplicateOption == true)
+            {
+                hasError = true
+                console.log(hasDuplicateOption);
+            }
+            else 
+            {
+                if(k==0)
+                {
+                    handleError('CorrectOpt','DEFAULT')
+                    hasError = true
+                }
+            }
+            
+            return hasError
+    }
+    
+    //------------------------------Post question into api after clicking on save question button-----------------------
+    const postQuestion = async() =>
+    {
+
+            console.log(!hasAnyFieldEmpty());
+            if(!hasAnyFieldEmpty())
+            {
+                await http.post('/questions',QueObject)
+                navigate('/QuestionList')
+                handleDisplayNavbar(true)
+            }
+        
+        // Questions = [...Questions , newQue]
+        // setQuestions(Questions) 
+    }
+
     //-------------------------to set all selected values to question object--------------
     const handleSelectedField = (value,field) =>
     {
@@ -139,8 +349,9 @@ function Form({QueObject,setQueObject,handleError})
         val.includes('<br>') && (val = '')
         QueObject.options[ind].option = val
         setQueObject({...QueObject})
-        hasDuplicateOption()
+        
         handleError(`Option${ind+1}`,val)
+        hasDuplicateOption()
     }
     console.log(QueObject);
 
@@ -195,16 +406,23 @@ function Form({QueObject,setQueObject,handleError})
         }
     }
 
-
-    
-    
-  
     return (
-        <div>
+        <div className='container'>
+            <div className="card text-center" style={{margin:'40px'}}>
+                <div className="card-header" style={{fontWeight:'bold', fontSize:'26px',textAlign:'left'}}>
+                    Edit Question
+                    {fullscreen === true ?
+                        <i className='bx bx-fullscreen' onClick={()=>handleOnclick('full')} style={{cursor:'pointer',float:'right'}} ></i>
+                    :  
+                        <i className='bx bx-exit-fullscreen bx-flip-horizontal' onClick={()=>handleOnclick('small')} style={{cursor:'pointer',float:'right'}}></i>}
+                </div>
+            
+                <div className="card-body"> 
+
+                <div>
             
             <form >
   
-                    
                 <div className="form-row">
                     <div className="form-group col-md-6 ">
                             <div style={{textAlign:'left'}}>
@@ -239,9 +457,7 @@ function Form({QueObject,setQueObject,handleError})
                                 <label> Select Topic </label>
                             </div>
                     
-                            <select className="form-control" style={{position:"relative"}} value={QueObject.topic ? QueObject.topic : "DEFAULT"} onChange={(e)=>handleSelectedField(e.target.value,'topic')}
-                                // onBlur={(e)=>handleError(e.target.value , 'Topic')} 
-                             >
+                            <select className="form-control" style={{position:"relative"}} value={QueObject.topic ? QueObject.topic : "DEFAULT"} onChange={(e)=>handleSelectedField(e.target.value,'topic')}>
                                 <option value="DEFAULT" disabled hidden>Type to search topic....</option>
                                 {AllTopic ? AllTopic.map((top,i) =>
                                 (   top.subject._id === QueObject.subject &&
@@ -346,7 +562,7 @@ function Form({QueObject,setQueObject,handleError})
                             <>
                                 <div className="questxt" style={{ display: richText ? 'none' : 'block' }}>
                                     <textarea className="form-control" id="qText" onBlur={(e)=> handleError('qText',e.target.value)} onChange={(e)=>handleSelectedField(e.target.value,'questionText')}
-                                        formcontrolname="questionText" rows="6">
+                                        value = {QueObject.questionText} formcontrolname="questionText" rows="6">
                                     </textarea>
 
                                     <div style={{textAlign:'left'}}>
@@ -469,32 +685,17 @@ function Form({QueObject,setQueObject,handleError})
             </form>
 
             
-        </div>
+            </div>
+                    </div>
+
+                    <div className="card-footer text-muted" style={{textAlign:'left'}}>
+                        <button type="button" className="btn btn-primary" style={{height:'50px',width:'160px',fontSize:'18px'}} onClick={postQuestion}>Update Question</button> &nbsp;&nbsp;
+                        <button type="button" className="btn btn-light" style={{height:'50px'}} onClick={handleCancel}  >Cancel</button>
+                    </div>
+                    
+                </div>
+            </div>
     )
 }
 
-Form.modules = {
-    toolbar: [
-        ["bold", "italic"],
-        ["code-block","blockquote", "underline"],
-        [{ list: "ordered" }, { list: "bullet" }],
-        [ { script: "super" }],
-        [{ header: [1, 2, 3, 4, 5, 6, false] }],
-        [{ color: [] }, { background: [] }, { align: [] }],
-        ["link", "image", "video"],
-    ],
-    clipboard: {
-      // toggle to add extra line breaks when pasting HTML:
-      matchVisual: false,
-    }
-  }
-  
-  Form.formats = [
-    'font', 'size',
-    'bold', 'italic', 'underline', 'strike', 'blockquote',
-    'list', 'bullet', 'indent',
-    'link', 'image', 'video'
-  ]
-export default Form;
-
-
+export default EditQuestionForm

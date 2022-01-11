@@ -55,7 +55,8 @@ nav{
   }
   
   
-/* image for no question */
-/* .img{
-  height: 50px;
-} */
+
+/* ---------------for closing icon------------- */
+.cancel :hover{
+  color: red;
+}

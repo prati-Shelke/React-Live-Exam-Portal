@@ -181,14 +181,15 @@ function QuestionList() {
                                 style={{marginRight:"8px",marginTop:"16px"}}/>
 
                                 
-                                <label>{question.questionText}</label>
+                                <label dangerouslySetInnerHTML={{ __html: question.questionText }}></label>
 
                                 {question.options.map((opt) =>
 
                                     <div className='text-muted' style={{marginLeft:"20px"}} key={opt._id} >
-                                        <label>
-                                            <input type={question.type==="MULTIPLE CHOICE" || question.type==="FILL IN BLANKS"? ("radio") : ("checkbox")}  checked={opt.isCorrect} disabled/> {opt.option}
-                                        </label>                                
+                                        <div>
+                                            <input type={question.type==="MULTIPLE CHOICE" || question.type==="FILL IN BLANKS"? ("radio") : ("checkbox")}  checked={opt.isCorrect} disabled/> &nbsp;&nbsp;
+                                            <label dangerouslySetInnerHTML={{ __html: opt.option }}></label>
+                                        </div>                                
                                     </div>
                                 )}
                                 

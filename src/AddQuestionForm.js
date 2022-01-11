@@ -17,7 +17,8 @@ function AddQuestionForm({handleDisplayNavbar})
         questionText : '' ,
         options : Array(4).fill({})
     })
-    let flag = true
+    let hasError = false 
+    let [hasDuplicateOption,sethasDuplicateOption] = useState(false)
     
     
     //---------------------------Display Navbar--------------------------
@@ -46,135 +47,121 @@ function AddQuestionForm({handleDisplayNavbar})
     }
     
     //-------------------------------------to display error message on particular field--------------------------------
-    const handleError = (val , field) =>
+    const handleError = (field , value = '') =>
     {
-                         
+                        
         let error = document.getElementById(`${field}`)   
-        // console.log(error);
-        if(field==="qText")
+        console.log('value',value)
+        console.log('error',error)
+        if(field === 'CorrectOpt')
         {
-            if(val === '')
-                {
-                    document.getElementById('qText').className = "form-control is-invalid"
-                }
-            else
-                {
-                    document.getElementById('qText').className = "form-control"
-                }
-        }
-        else if(field === 'duplicateOption')
-        {
-                if(val !== '')
+            if(value !== '')
                 {  
-                    error.style.display="block"
-                    
-                }
-                else
-                {
-                    error.style.display="none"
-                    
-                }
-            
-        }
-        else if(field === 'selectOption')
-        {
-            
-                if(val !== '')
-                {  
-                    // error.textContent = `Duplicate options are not allowed.`
+                   
                     error.style.display="block"                    
                 }
                 else
                 {
                     error.style.display="none"
-                    flag = true
+                    hasError = false
                 }
             
-        }
-        else if(field.includes('Option'))
+        }        
+        else if(field === 'DuplicateOpt')
         {
-            if(val=='')
+                if(value !== '')
+                {  
+                    error.style.display="block"
+                    sethasDuplicateOption(true)
+                }
+                else
+                {
+                    error.style.display="none"
+                    sethasDuplicateOption(false)
+                }
+            
+        }           
+        else if(value === '' || value === 'DEFAULT')
+        {
+            
+            if(field === 'Subject' || field === 'Topic' || field === 'Type' || field === 'Difficulty level')
+            {
+                error.style.display = "block"
+            }
+
+            else if(field === 'Right marks' || field === 'Wrong marks' || field === 'qText')
+            {
+                error.style.display = "block"
+                field === 'Right marks' && (document.getElementById('Rmarks').className = "form-control is-invalid")
+                field === 'Wrong marks' && (document.getElementById('Wmarks').className = "form-control is-invalid")
+                field === 'qText' && (error.className = "form-control is-invalid")
+            }
+            else if(field.includes('Option'))
             {
                 error.style.display="block"
-                error.textContent = `Option is required`
             }
-            else
-            {
-                error.style.display="none"
-                
-            }
-            
-        }  
-        
-        else if(val == '' || val === "DEFAULT" )
-        {
-            
-            if(field==="Right marks")
-            {
-                document.getElementById('Rmarks').className = "form-control is-invalid"
-            }
-            else if(field === "Wrong marks")
-            {
-                document.getElementById('Wmarks').className = "form-control is-invalid"
-            }
-            error.style.display="block"
-            error.textContent = `${field} is required`
-        }
+
+        } 
+           
         else
         {
-            error.style.display="none"
-            document.getElementById('Rmarks').className = "form-control "
+            error.style.display = "none"
+            document.getElementById('Rmarks').className = "form-control"
             document.getElementById('Wmarks').className = "form-control "
-            // document.getElementById('qText').className = "form-control"
+            
+            if(field === 'qText') 
+            {
+                error.className = "form-control";
+                error.style.display = "block"
+            }
         }
     }
-
-
-    const valid = () =>
+    
+    const hasAnyFieldEmpty = () =>
     {
-        let k=0
+        let k=0 , i=0
             
             if(QueObject.subject === '')
                 {
-                    handleError('DEFAULT','Subject')
-                    flag = false
+                    handleError('Subject','DEFAULT')
+                    hasError = true
                 }
 
             if(QueObject.topic === '')
                 {
-                    handleError('DEFAULT','Topic')
-                    flag = false
+                    handleError('Topic','DEFAULT')
+                    hasError = true
                     
                 }
 
             if(QueObject.type === '')
                 {
-                    handleError('DEFAULT','Type')
-                    flag = false
+                    handleError('Type','DEFAULT')
+                    hasError = true
                 }
 
             if(QueObject.diffLevel === '')
                 {
-                    handleError('DEFAULT','Difficulty level')
-                    flag = false
+                    handleError('Difficulty level','DEFAULT')
+                    hasError = true
                 }           
                 
             if(QueObject.rightMarks === '')
                 {
-                    handleError('','Right Marks')
-                    flag = false
+                    handleError('Right Marks','')
+                    hasError = true
                 }
 
             if(QueObject.wrongMarks === '')
                 {
-                    handleError('','Wrong Marks')
-                    flag = false
+                    handleError('Wrong Marks','')
+                    hasError = true
                 }
 
             if(QueObject.questionText === '' )
                 {
-                    handleError('','qText')
-                    flag = false
+                    handleError('qText','')
+                    hasError = true
                 }
             
             
@@ -183,37 +170,48 @@ function AddQuestionForm({handleDisplayNavbar})
                     // opt.option == '' && handleError('',`Option${ind+1}`)
                     if(opt.option == '')
                     {
-                        console.log("option null");
-                        handleError('',`Option${ind+1}`)
-                        flag = false
+                        
+                        handleError(`Option${ind+1}`,'')
+                        hasError = true
                         k=1
                     }
-                    if(opt.isCorrect === true)
+                    else 
                     {  
-                        console.log(QueObject);
-                        flag = true
-                        k=1
+                        if(opt.isCorrect === true)
+                        {
+                            
+                            hasError = false
+                            k=1
+                        }
                     }                
                 })
-
-            if(k==0)
+            console.log(hasDuplicateOption);
+            if(hasDuplicateOption == true)
             {
-                console.log(flag);
-                handleError('DEFAULT','selectOption')
-                flag = false
+                hasError = true
+                console.log(hasDuplicateOption);
             }
-
-            return flag
+            else 
+            {
+                if(k==0)
+                {
+                    handleError('CorrectOpt','DEFAULT')
+                    hasError = true
+                }
+            }
+            
+            return hasError
     }
+    
     //------------------------------Post question into api after clicking on save question button-----------------------
     const postQuestion = async() =>
     {
 
-            console.log(valid())
-            if(valid())
+            console.log(!hasAnyFieldEmpty());
+            if(!hasAnyFieldEmpty())
             {
                 await http.post('/questions',QueObject)
-                navigate(-1)
+                navigate('/QuestionList')
                 handleDisplayNavbar(true)
             }
         
@@ -249,38 +247,80 @@ function AddQuestionForm({handleDisplayNavbar})
 export default AddQuestionForm
 
 
+ // if(field==="qText")
+        // {
+        //     if(value === '')
+        //         {
+        //             document.getElementById('qText').className = "form-control is-invalid"
+        //         }
+        //     else
+        //         {
+        //             document.getElementById('qText').className = "form-control"
+        //         }
+        // }
+        // else if(field === 'DuplicateOpt')
+        // {
+        //         if(value !== '')
+        //         {  
+        //             error.style.display="block"
+        //             sethasDuplicateOption(true)
+        //         }
+        //         else
+        //         {
+        //             error.style.display="none"
+        //             sethasDuplicateOption(false)
+        //         }
+            
+        // }
+        // else if(field === 'CorrectOpt')
+        // {
+            
+        //         if(value !== '')
+        //         {  
+                   
+        //             error.style.display="block"                    
+        //         }
+        //         else
+        //         {
+        //             error.style.display="none"
+        //             hasError = false
+        //         }
+            
+        // }
+        // else if(field.includes('Option'))
+        // {
+        //     if(value=='')
+        //     {
+        //         error.style.display="block"
+        //         error.textContent = `Option is required`
+        //     }
+        //     else
+        //     {
+        //         error.style.display="none"
+                
+        //     }
+            
+        // }  
+        
+        // else if(value == '' || value === "DEFAULT" )
+        // {
+            
+        //     if(field==="Right marks")
+        //     {
+        //         document.getElementById('Rmarks').className = "form-control is-invalid"
+        //     }
+        //     else if(field === "Wrong marks")
+        //     {
+        //         document.getElementById('Wmarks').className = "form-control is-invalid"
+        //     }
+        //     error.style.display="block"
+        //     error.textContent = `${field} is required`
+        // }
+        // else
+        // {
+        //     error.style.display="none"
+        //     document.getElementById('Rmarks').className = "form-control "
+        //     document.getElementById('Wmarks').className = "form-control "
+        //     // document.getElementById('qText').className = "form-control"
+        // }
 
-// if(val == '' || val === "DEFAULT" )
-//         {
-//             switch(field)
-//             {
-//                 case "Right Marks" : 
-//                             document.getElementById('Rmarks').className = "form-control is-invalid"
-//                             break;
-
-//                 case "Wrong Marks" : 
-//                             document.getElementById('Wmarks').className = "form-control is-invalid"
-//                             break;
-
-//                 case "qText" :
-//                             document.getElementById('qText').className = "form-control is-invalid"
-//                             break;
-
-//                 default :
-//                             if(field.includes('Option'))
-//                             {
-//                                 error.style.display="block"
-//                                 error.textContent = `Option is required`
-//                             }
-//             }
-//             error.style.display="block"
-//             error.textContent = `${field} is required`
-
-//         }
-//         else
-//         {
-//             error.style.display="none"
-//             document.getElementById('Rmarks').className = "form-control "
-//             document.getElementById('Wmarks').className = "form-control "
-//             document.getElementById('qText').className = "form-control"
-//         }
