@@ -2,11 +2,20 @@ import React,{useState} from 'react'
 import {useNavigate } from 'react-router-dom';
 import http from './http';
 import Form from './Form';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+toast.configure()
+
 
 function AddQuestionForm({handleDisplayNavbar}) 
 {
 
     let navigate = useNavigate()
+    let hasError = false , hasChecked = false
+    let [hasDuplicateOption,sethasDuplicateOption] = useState(false)
+    const [richText , setrichText] = useState(false) 
+
+
     let [QueObject,setQueObject] = useState({
         type : 'MULTIPLE CHOICE' ,
         diffLevel : 'Medium' ,
@@ -17,8 +26,6 @@ function AddQuestionForm({handleDisplayNavbar})
         questionText : '' ,
         options : Array(4).fill({})
     })
-    let hasError = false 
-    let [hasDuplicateOption,sethasDuplicateOption] = useState(false)
     
     
     //---------------------------Display Navbar--------------------------
@@ -51,8 +58,7 @@ function AddQuestionForm({handleDisplayNavbar})
     {
                         
         let error = document.getElementById(`${field}`)   
-        console.log('value',value)
-        console.log('error',error)
+        
         if(field === 'CorrectOpt')
         {
             if(value !== '')
@@ -89,12 +95,13 @@ function AddQuestionForm({handleDisplayNavbar})
                 error.style.display = "block"
             }
 
-            else if(field === 'Right marks' || field === 'Wrong marks' || field === 'qText')
+            else if(field === 'Right marks' || field === 'Wrong marks' || field === 'qText' || field === 'richQueText')
             {
                 error.style.display = "block"
                 field === 'Right marks' && (document.getElementById('Rmarks').className = "form-control is-invalid")
                 field === 'Wrong marks' && (document.getElementById('Wmarks').className = "form-control is-invalid")
                 field === 'qText' && (error.className = "form-control is-invalid")
+               
             }
             else if(field.includes('Option'))
             {
@@ -158,38 +165,43 @@ function AddQuestionForm({handleDisplayNavbar})
                     hasError = true
                 }
 
-            if(QueObject.questionText === '' )
+            
+            if(QueObject.questionText === '')
                 {
-                    handleError('qText','')
+                    console.log("qtext is empty");
+                    richText!=true ? handleError('qText','') : handleError('richQueText')
                     hasError = true
                 }
-            
-            
+
                 QueObject.options.map((opt,ind)=>            
                 {
-                    // opt.option == '' && handleError('',`Option${ind+1}`)
+                    //option is empty
                     if(opt.option == '')
                     {
                         
                         handleError(`Option${ind+1}`,'')
                         hasError = true
                         k=1
+                        
                     }
-                    else 
-                    {  
-                        if(opt.isCorrect === true)
-                        {
-                            
-                            hasError = false
-                            k=1
-                        }
-                    }                
                 })
-            console.log(hasDuplicateOption);
+
+                QueObject.options.map((opt,ind)=>            
+                { 
+                    // option is not checked
+                    if (opt.isCorrect === true)
+                    {
+                        hasChecked = true
+                        k=1
+                    }
+                                                     
+                })
+
+           
             if(hasDuplicateOption == true)
             {
                 hasError = true
-                console.log(hasDuplicateOption);
+                
             }
             else 
             {
@@ -202,15 +214,24 @@ function AddQuestionForm({handleDisplayNavbar})
             
             return hasError
     }
+
+    //---------------------to add notification after question is added---------------------------------------
+    const notify = () => 
+    {
+       
+        toast.success('Question added successfully!',
+        { position: toast.POSITION.BOTTOM_RIGHT, autoClose: 3000 })
+    }
     
     //------------------------------Post question into api after clicking on save question button-----------------------
     const postQuestion = async() =>
     {
 
-            console.log(!hasAnyFieldEmpty());
-            if(!hasAnyFieldEmpty())
+            // console.log(!hasAnyFieldEmpty());
+            if(!hasAnyFieldEmpty() && hasChecked === true)
             {
                 await http.post('/questions',QueObject)
+                notify()
                 navigate('/QuestionList')
                 handleDisplayNavbar(true)
             }
@@ -231,7 +252,7 @@ function AddQuestionForm({handleDisplayNavbar})
                 </div>
             
                 <div className="card-body"> 
-                    <Form QueObject={QueObject} setQueObject={setQueObject} handleError={handleError} />
+                    <Form QueObject={QueObject} setQueObject={setQueObject} handleError={handleError} richText={richText} setrichText={setrichText}/>
                 </div>
 
                 <div className="card-footer text-muted" style={{textAlign:'left'}}>
@@ -323,4 +344,3 @@ export default AddQuestionForm
         //     document.getElementById('Wmarks').className = "form-control "
         //     // document.getElementById('qText').className = "form-control"
         // }
-

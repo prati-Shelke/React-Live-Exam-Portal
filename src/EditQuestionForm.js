@@ -7,23 +7,40 @@ import QuestionList from './QuestionList';
 import {BiX} from 'react-icons/bi'
 import ReactQuill from 'react-quill';
 import '../node_modules/react-quill/dist/quill.snow.css';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+toast.configure()
 
 function EditQuestionForm({handleDisplayNavbar}) 
 {
 
    
     let navigate = useNavigate()
+    const pattern = /<\/?[a-z][\s\S]*>/i;
+    let question = useLocation().state.question
+    let queId = useParams().id
+    
     const [AllSubject,setAllSubject] = useState([])
     const [AllTopic,setAllTopic] = useState()
     let [Subject,setSubject] = useState()
     let [Topic,setTopic] =useState()
-    let question = useLocation().state.question
-    let s,t
-    let queId = useParams().id
-    console.log(queId)
-    let hasError = false 
-    let [hasDuplicateOption,sethasDuplicateOption] = useState(false)
-    const [richText , setrichText] = useState(false)
+    let [DotSpinner,setDotSpinner] = useState(false)
+    let [IsDuplicate,setIsDuplicate] = useState(false)
+    const [richText , setrichText] = useState(pattern.test(question.questionText))
+    
+    
+
+    let s,t,flag=0
+    let hasError = false , hasChecked = false 
+    
+    
+    //-------------to check whether text is written in rich text editor or not--------------------
+    let optionObj = question.options.map((opt)=>
+    ({
+        ...opt , richTextEditor : pattern.test(opt.option)
+    }))
+    // console.log(optionObj)
+    
 
     
     let [QueObject,setQueObject] = useState({
@@ -34,9 +51,9 @@ function EditQuestionForm({handleDisplayNavbar})
         rightMarks : question.rightMarks ,
         wrongMarks : question.wrongMarks,
         questionText : question.questionText ,
-        options : question.options
+        options : optionObj
     })
-    console.log(QueObject)
+    // console.log(QueObject)
     
     useEffect(async() => {
     
@@ -54,13 +71,7 @@ function EditQuestionForm({handleDisplayNavbar})
 
     }, [])
     
-    // const pattern = /<\/?[a-z][\s\S]*>/i;
-    // let rad = QueObject.options.map((q) => (
-    // {
-    //     ...q, richTextEditor: pattern.test(q.option)
-    // }))
     
-    // console.log(rad);
 
 
     //---------------------------Display Navbar--------------------------
@@ -81,8 +92,80 @@ function EditQuestionForm({handleDisplayNavbar})
     }
     
 
-    
-     //-------------------------to set all selected values to question object--------------
+    //-------------------------------------to display error message on particular field--------------------------------
+    const handleError = (field , value = '') =>
+    {
+                        
+        let error = document.getElementById(`${field}`)   
+        console.log(error)
+        if(field === 'CorrectOpt')
+        {
+            if(value !== '')
+                {  
+                   
+                    error.style.display="block"                    
+                }
+                else
+                {
+                    error.style.display="none"
+                    hasError = false
+                }
+            
+        }        
+        else if(field === 'DuplicateOpt')
+        {
+                if(value !== '')
+                {  
+                    error.style.display="block"
+                    setIsDuplicate(true)
+                }
+                else
+                {
+                    error.style.display="none"
+                    setIsDuplicate(false)
+                }
+            
+        }           
+        else if(value === '' || value === 'DEFAULT')
+        {
+            
+            if(field === 'Subject' || field === 'Topic' || field === 'Type' || field === 'Difficulty level')
+            {
+                error.style.display = "block"
+            }
+
+            else if(field === 'Right marks' || field === 'Wrong marks' || field === 'qText' || field === 'richQueText')
+            {
+                error.style.display = "block"
+                field === 'Right marks' && (document.getElementById('Rmarks').className = "form-control is-invalid")
+                field === 'Wrong marks' && (document.getElementById('Wmarks').className = "form-control is-invalid")
+                field === 'qText' && (error.className = "form-control is-invalid")
+               
+            }
+            else if(field.includes('Option'))
+            {
+                error.style.display="block"
+            }
+
+        } 
+           
+        else
+        {
+            error.style.display = "none"
+            document.getElementById('Rmarks').className = "form-control"
+            document.getElementById('Wmarks').className = "form-control "
+            
+            if(field === 'qText') 
+            {
+                error.className = "form-control";
+                error.style.display = "block"
+            }
+        }
+    }
+
+
+
+    //-------------------------to set all selected values to question object--------------
     const handleSelectedField = (value,field) =>
     {
 
@@ -135,20 +218,78 @@ function EditQuestionForm({handleDisplayNavbar})
 
             case 'questionText' :
                 {
-                    setQueObject({...QueObject , questionText : value})
-                    richText!=true && handleError('qText',value)
+                    
+                    let hasText = !!value.replace(/(<([^>]+)>)/ig, "").length;
+                    if((!hasText && richText === true) || value==="<p> </p>")
+                    {
+                        console.log("hi1",value);
+                        handleError('richQueText','')
+                        value = ''
+                        setQueObject({...QueObject , questionText : value})
+                    }
+                    else if(hasText && richText === true)
+                    {console.log("hi2");
+                        handleError('richQueText',value)
+                        setQueObject({...QueObject , questionText : value})
+                    }
+                    else
+                    {
+                        handleError('qText',value)
+                        setQueObject({...QueObject , questionText : value})
+                    }
                     break;
                 }
         }
         
     }
+
+
+    //-----------------------------to check whether option has duplicate value--------------------------
+    const hasDuplicateOption = () =>
+    {
+        for(let i=0; i<QueObject.options.length; i++)
+        {
+            for(let j=i+1; j<QueObject.options.length; j++)
+            {
+                 
+                /* If duplicate found then increment count by 1 */
+                if(QueObject.options[j].option!='')
+                {
+                    if(QueObject.options[i].option == QueObject.options[j].option)
+                    {
+                        handleError(`DuplicateOpt`,'flag')
+                        flag = 1
+                    }
+                }
+            }
+             
+        }
+         
+        flag===0 && handleError(`DuplicateOpt`,'');
+    }
+ 
     
     //----------------------to add options in object-------------------
     const handleChange = (val , ind) =>
     {
        
-        QueObject.options[ind].option = val
-        setQueObject({...QueObject})
+        let hasText = !!val.replace(/(<([^>]+)>)/ig, "").length;
+        if((!hasText && QueObject.options[ind].richTextEditor === true) || val==="<p> </p>")
+        {
+            console.log("hi1",val);
+            handleError(`Option${ind+1}`,'')
+            val = ''
+            QueObject.options[ind].option = val
+            setQueObject({...QueObject})
+        }
+        else 
+        {console.log("hi2");
+            handleError(`Option${ind+1}`,val)
+            QueObject.options[ind].option = val
+            setQueObject({...QueObject})
+            
+        }
+        hasDuplicateOption()
     }
     
     
@@ -164,17 +305,20 @@ function EditQuestionForm({handleDisplayNavbar})
                 QueObject.options[i].isCorrect = false
                 setQueObject({...QueObject})
             }
-
+            console.log(QueObject)
+            
             QueObject.options[ind].isCorrect = !QueObject.options[ind].isCorrect
             setQueObject({...QueObject})
-
+            
         }
         else
         {
            
             QueObject.options[ind].isCorrect = !QueObject.options[ind].isCorrect
             setQueObject({...QueObject})
+            
         }
+        handleError('CorrectOpt','')
         
     }
    
@@ -208,77 +352,8 @@ function EditQuestionForm({handleDisplayNavbar})
         handleDisplayNavbar(true)
     }
   
-    //-------------------------------------to display error message on particular field--------------------------------
-    const handleError = (field , value = '') =>
-    {
-                        
-        let error = document.getElementById(`${field}`)   
-        console.log('value',value)
-        console.log('error',error)
-        if(field === 'CorrectOpt')
-        {
-            if(value !== '')
-                {  
-                   
-                    error.style.display="block"                    
-                }
-                else
-                {
-                    error.style.display="none"
-                    hasError = false
-                }
-            
-        }        
-        else if(field === 'DuplicateOpt')
-        {
-                if(value !== '')
-                {  
-                    error.style.display="block"
-                    sethasDuplicateOption(true)
-                }
-                else
-                {
-                    error.style.display="none"
-                    sethasDuplicateOption(false)
-                }
-            
-        }           
-        else if(value === '' || value === 'DEFAULT')
-        {
-            
-            if(field === 'Subject' || field === 'Topic' || field === 'Type' || field === 'Difficulty level')
-            {
-                error.style.display = "block"
-            }
 
-            else if(field === 'Right marks' || field === 'Wrong marks' || field === 'qText')
-            {
-                error.style.display = "block"
-                field === 'Right marks' && (document.getElementById('Rmarks').className = "form-control is-invalid")
-                field === 'Wrong marks' && (document.getElementById('Wmarks').className = "form-control is-invalid")
-                field === 'qText' && (error.className = "form-control is-invalid")
-            }
-            else if(field.includes('Option'))
-            {
-                error.style.display="block"
-            }
-
-        } 
-           
-        else
-        {
-            error.style.display = "none"
-            document.getElementById('Rmarks').className = "form-control"
-            document.getElementById('Wmarks').className = "form-control "
-            
-            if(field === 'qText') 
-            {
-                error.className = "form-control";
-                error.style.display = "block"
-            }
-        }
-    }
-    
+    //------------------------------to check if any field empty or not before edit question------------------------------------------------
     const hasAnyFieldEmpty = () =>
     {
         let k=0 , i=0
@@ -320,35 +395,38 @@ function EditQuestionForm({handleDisplayNavbar})
                     hasError = true
                 }
 
-            if(QueObject.questionText === '' )
+            
+            if(QueObject.questionText === '')
                 {
-                    handleError('qText','')
+                    richText!=true ? handleError('qText','') : handleError('richQueText')
                     hasError = true
                 }
-            
-            
+
                 QueObject.options.map((opt,ind)=>            
                 {
-                    // opt.option == '' && handleError('',`Option${ind+1}`)
+                    //option is empty
                     if(opt.option == '')
                     {
                         
                         handleError(`Option${ind+1}`,'')
                         hasError = true
                         k=1
+                        
                     }
-                    else 
-                    {  
-                        if(opt.isCorrect === true)
-                        {
-                            
-                            hasError = false
-                            k=1
-                        }
-                    }                
                 })
-            console.log(hasDuplicateOption);
-            if(hasDuplicateOption == true)
+
+                QueObject.options.map((opt,ind)=>            
+                { 
+                    //option is not checked
+                    if(opt.isCorrect === true && k!=1)
+                    {
+                        hasChecked = true
+                        k=1
+                    }
+                                 
+                })
+            
+            if(IsDuplicate == true)
             {
                 hasError = true
                 console.log(hasDuplicateOption);
@@ -361,16 +439,28 @@ function EditQuestionForm({handleDisplayNavbar})
                     hasError = true
                 }
             }
-            
+            console.log(hasError);
             return hasError
+    }
+    
+
+
+    //---------------------to add notification after question is added---------------------------------------
+    const notify = () => 
+    {
+        console.log("hi");
+        toast.success('Question updated successfully!',
+        { position: toast.POSITION.BOTTOM_RIGHT, autoClose: 3000 })
     }
 
     //------------------------------Post question into api after clicking on save question button-----------------------
     const editQuestion = async() =>
     {
-        if(!hasAnyFieldEmpty())
+        console.log(!hasAnyFieldEmpty());
+        if(!hasAnyFieldEmpty() && hasChecked === true)
         {
             await http.put(`/questions/${queId}`,QueObject)
+            notify()
             navigate(-1)
             handleDisplayNavbar(true)
         }
@@ -537,7 +627,7 @@ function EditQuestionForm({handleDisplayNavbar})
                                         </textarea>
 
                                         <div style={{textAlign:'left'}}>
-                                            <a className='text-muted' href="#" onClick={()=>setrichText(true)}>
+                                            <a className='text-muted' style={{cursor:"pointer"}} onClick={()=>setrichText(true)}>
                                                 Enable Rich text editor
                                             </a>
                                         </div>
@@ -557,11 +647,11 @@ function EditQuestionForm({handleDisplayNavbar})
                                     </div>
 
                                     <div style={{textAlign:'left'}}>
-                                        <a className='text-muted' href="#" onClick={()=>setrichText(false)} >
+                                        <a className='text-muted' style={{cursor:"pointer"}} onClick={()=>setrichText(false)} >
                                             Disable Rich text editor
                                         </a>
                                     </div>
-                             
+                                    <span  id="richQueText" style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}>Question Text is required</span>&nbsp;&nbsp;
                                 </>
                                 }
                         </div>  
@@ -572,39 +662,73 @@ function EditQuestionForm({handleDisplayNavbar})
                                 </div>
 
                                 { QueObject.options.length ?
-                                    (
-                                        QueObject.options.map((opt,ind) =>
-                                        <div className="input-group" key={ind}>
-                                            <div className="input-group-prepend">
-                                                <div className="input-group-text">
-                                                    <input type={QueObject.type==="MULTIPLE CHOICE" || QueObject.type==="FILL IN BLANKS" ? "radio" : "checkbox"} 
-                                                        aria-label="Radio button for following text input" 
-                                                        style={{marginRight:"6px" ,marginBottom:"4px"}} 
-                                                        onChange={()=>handleChecked(ind)}
-                                                        checked={!!opt.isCorrect}
-                                                        name="a"
-                                                    />
-                                                    Option {ind+1}
-                                                </div>
+                                (
+                                    QueObject.options.map((opt,ind) =>
+                                    <div className="input-group" key={ind} style={{marginTop:"30px"}}>
+                                        <div className="input-group-prepend">
+                                            <div className="input-group-text">
+                                                <input type={QueObject.type==="MULTIPLE CHOICE" || QueObject.type==="FILL IN BLANKS" ? "radio" : "checkbox"} 
+                                                    aria-label="Radio button for following text input" 
+                                                    style={{marginRight:"6px" }} 
+                                                    onChange={()=>handleChecked(ind)}
+                                                    checked={!!opt.isCorrect}
+                                                    name="a"
+                                                />
+                                                Option {ind+1}
                                             </div>
-                                            
-                                            <textarea className="form-control"
-                                                formcontrolname="questionText" id="question" rows="4" value={opt.option} onChange={(e)=>handleChange(e.target.value,ind)}>
+                                        </div>
+                                        
+                                        {opt.richTextEditor === false ?
+                                        <>
+                                            <textarea className="form-control" onBlur={(e)=>handleError(`Option${ind+1}`,e.target.value)} style={{display:"block"}}
+                                                formcontrolname="questionText" rows="4" value={opt.option} onChange={(e)=>handleChange(e.target.value,ind)}>
                                             </textarea>
 
-                                            <div className='col-md-12' style={{textAlign:'left' , paddingLeft:'-10px'}}>
+                                            <div className='col-md-12' style={{textAlign:'left' , paddingLeft:'-10px',marginLeft:"-15px"}}>
                                                 <a className='text-muted' style={{cursor:"pointer"}} onClick={() => RemoveOption(ind)}>
                                                     Remove option 
                                                 </a> 
                                                 
                                                 <span className="text -muted"> | </span>
 
-                                                <a _ngcontent-waj-c5="" className="text-muted" href="#" >
+                                                <a _ngcontent-waj-c5="" className="text-muted" style={{cursor:"pointer"}} onClick={()=>{opt.richTextEditor = true ; setQueObject({...QueObject})}}>
                                                     Enable Rich text editor
                                                 </a>
-                                            </div>  &nbsp;&nbsp;                          
-                                        </div>)
-                                    ) : (<div></div>)
+                                            </div>  &nbsp;&nbsp; 
+                                            <span  id={`Option${ind+1}`} style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}>Option is required</span>                         
+                                        </> 
+                                        :
+                                        <>
+                                            <div className="questxt" style={{ display: opt.richTextEditor ? 'block' : 'none'}}>
+                                                <ReactQuill theme={'snow'} 
+                                                    placeholder="Insert text here..."
+                                                    modules={EditQuestionForm.modules}
+                                                    formats={EditQuestionForm.formats}
+                                                    onChange={(e)=>handleChange(e,ind)}
+                                                    value = {opt.option}
+                                                    onBlur = {(e)=>opt.option ? handleError(`Option${ind+1}`,'flag') : handleError(`Option${ind+1}`,opt.option) }
+                                                    
+                                                />
+                                            </div>
+
+                                            <div className='col-md-12' style={{textAlign:'left' , paddingLeft:'-10px',marginLeft:"-15px"}}>
+                                                <a className='text-muted' style={{cursor:"pointer"}} onClick={() => RemoveOption(ind)}>
+                                                    Remove option 
+                                                </a> 
+                                                
+                                                <span className="text -muted"> | </span>
+
+                                                <a _ngcontent-waj-c5="" className="text-muted" style={{cursor:"pointer"}} onClick={()=>{opt.richTextEditor = false ; setQueObject({...QueObject})}}>
+                                                    Disable Rich text editor
+                                                </a>
+                                            </div>  &nbsp;&nbsp; 
+                                            <span  id={`Option${ind+1}`} style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}>Option is required</span>
+                                        </>
+                                                                        
+                                        }
+                                    
+                                    </div>)
+                                ) : (<div></div>)
                                 }
                         </div> 
                         
@@ -616,6 +740,8 @@ function EditQuestionForm({handleDisplayNavbar})
                                         Add option 
                                 </a>
                             </div>
+                            <span id="CorrectOpt" style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}>Please select correct answer from options </span><br/>
+                            <span id="DuplicateOpt" style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}>Duplicate options are not allowed.</span>
                         </div>      
                     </form>
 
@@ -625,6 +751,7 @@ function EditQuestionForm({handleDisplayNavbar})
                     <button type="button" className="btn btn-primary" style={{height:'50px',width:'180px',fontSize:'18px'}} onClick={editQuestion}>Update Question</button> &nbsp;&nbsp;
                     <button type="button" className="btn btn-light" style={{height:'50px'}} onClick={handleCancel} >Cancel</button>
                 </div>
+                
             </div>
         </div>
     )
@@ -633,13 +760,14 @@ function EditQuestionForm({handleDisplayNavbar})
 
 EditQuestionForm.modules = {
     toolbar: [
-        ["bold", "italic"],
-        ["code-block","blockquote", "underline"],
-        [{ list: "ordered" }, { list: "bullet" }],
-        [ { script: "super" }],
-        [{ header: [1, 2, 3, 4, 5, 6, false] }],
-        [{ color: [] }, { background: [] }, { align: [] }],
-        ["link", "image", "video"],
+      [{ 'header': '1' }, { 'header': '2' }, { 'font': [] }],
+      [{ size: [] }],
+      ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+      [{ 'list': 'ordered' }, { 'list': 'bullet' },
+      { 'indent': '-1' }, { 'indent': '+1' }],
+      ['link', 'image', 'video'],
+      ['clean'],
+      ['code-block']
     ],
     clipboard: {
       // toggle to add extra line breaks when pasting HTML:
@@ -648,7 +776,7 @@ EditQuestionForm.modules = {
   }
   
   EditQuestionForm.formats = [
-    'font', 'size',
+    'header', 'font', 'size',
     'bold', 'italic', 'underline', 'strike', 'blockquote',
     'list', 'bullet', 'indent',
     'link', 'image', 'video'

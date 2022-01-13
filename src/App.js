@@ -7,6 +7,7 @@ import AddQuestionForm from "./AddQuestionForm";
 import EditQuestionForm from "./EditQuestionForm"
 import Footer from "./Footer"
 import NavBar from "./NavBar";
+import RecaptchaComponent from "./RecaptchaComponent";
 
 
 
@@ -26,13 +27,14 @@ function App() {
       <NavBar /> : <></>}
         <Router>
           <Routes>
-              <Route path="*" element={<Navigate to ="/QuestionList" />}/>
+              <Route path="*" element={<Navigate to ="/Login" />}/>
+              <Route path="/Login" element={<RecaptchaComponent />} />
               <Route path="/QuestionList" element={<QuestionList />} />
               <Route path="/AddQuestionForm" element={<AddQuestionForm handleDisplayNavbar={handleDisplayNavbar}/>} /> 
               <Route path="/EditQuestionForm/:id" element={<EditQuestionForm handleDisplayNavbar={handleDisplayNavbar}/>} /> 
-              
           </Routes>
       </Router>
+      
       <Footer/>
     </div>
   );

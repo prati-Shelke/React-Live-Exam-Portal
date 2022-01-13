@@ -7,6 +7,10 @@ import ReactPaginate from 'react-paginate';
 import http from './http';
 import NoQuesImg from './NoQuesImg.png'
 import { selectOptions } from '@testing-library/user-event/dist/select-options';
+import {BiX} from 'react-icons/bi'
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 
 
 function QuestionList() {
@@ -46,13 +50,22 @@ function QuestionList() {
     {
         //to get questions as per topic when topic is selected o.w all questions
         
-        SelectedTopic ?
-        setQuestions(await http.get(`/questions?page=1&limit=${questionPerPage}&term=&topic=${SelectedTopic.topic}`))
-        :
-        setQuestions(await http.get('/questions?page=1&limit=200&term=&topic=')) 
+        if(SelectedTopic === 'AllQuestion')
+        {
+            
+            setQuestions(await http.get('/questions?page=1&limit=500&term=&topic='))
+        }
+        else
+        {
+            SelectedTopic ?
+            setQuestions(await http.get(`/questions?page=1&limit=&term=&topic=${SelectedTopic.topic}`))
+            :
+            setQuestions(await http.get('/questions?page=1&limit=500&term=&topic=61d963cce6d7d77c8e4f302e')) 
+            
+        }
         setloading(false)
     }
-
+    
     //-------------set values to selected topic---------------------
     const handleTopicChange = (val) =>
     {
@@ -82,6 +95,13 @@ function QuestionList() {
         
     };
     
+    //---------------------to add notification after question is added---------------------------------------
+    const notify = () => 
+    {
+        
+        toast.success('Question removed successfully!',
+        { position: toast.POSITION.BOTTOM_RIGHT, autoClose: 2000 })
+    }
 
     //---------------------delete Question--------------------------
     const DeleteQuestion = async(qid) =>
@@ -91,6 +111,8 @@ function QuestionList() {
         if(result)
             {
                 await http.delete(`/questions/${qid}`)
+                setloading(true)
+                notify()
                 fetchQue()
                 // const filterQue = Questions.filter(que => que.id !== qid)
                 // setQuestions(filterQue)
@@ -128,7 +150,7 @@ function QuestionList() {
                                     Show 
                                 </span>
                                     
-                                <select formcontrolname="limitPerPage" style={{marginRight:"6px"}} onChange={(e)=> setquestionPerPage(parseInt(e.target.value))} value={questionPerPage}>
+                                <select formcontrolname="limitPerPage" style={{marginRight:"6px"}} onChange={(e)=> {setquestionPerPage(parseInt(e.target.value))}} value={questionPerPage}>
                                     <option value="5">5</option>
                                     <option value="10">10</option>
                                     <option value="20">20</option>
@@ -144,20 +166,30 @@ function QuestionList() {
                         
                         
                           
-                                
+                            
                             <input type="text" style={{marginLeft:"-100px",marginRight:"14px",marginTop:"8px"}} 
                             className="form-control col-3" id="inputPassword2" placeholder="Search Question" onChange={(e)=>setSearchText(e.target.value)}/>
                         
-                            <select className="d-flex form-control col-md-2" 
-                                onChange={(e)=>handleTopicChange(e.target.value)} value={SelectedTopic.name}  
-                                style={{marginTop:"8px"}} >
+                            
+                            <select className="d-flex form-control col-md-2" value={SelectedTopic.name ? SelectedTopic.name : 'DEFAULT'} onChange={(e)=>handleTopicChange(e.target.value)}  style={{marginTop:"8px",position:"relative"}} >
+                                <option value="DEFAULT" disabled hidden > Choose topic </option>
                             {Topic ? Topic.map((top)=>   
                                 (
                                     <option key={top._id} >{top.name}</option>
                                 )) : ('')}
                             </select>
-                            
-                           
+
+                            {SelectedTopic.name &&
+                                <span className="cancel" style={{position:"absolute",top:"38px",right:"0",marginRight: "70px",cursor:"pointer"}}> 
+                                    <BiX size={20} className='text-muted position-absolute'  
+                                        onClick={()=>{
+                                                        setloading(true)
+                                                        fetchQue()
+                                                        setSelectedTopic('AllQuestion')
+                                                        localStorage.setItem('SelectedTopic',JSON.stringify({topic:Topic[0]._id ,name:Topic[0].name}))   
+                                                    }}
+                                    />
+                                </span>}
                         </div>
                     </div>
                   <hr />
@@ -171,12 +203,14 @@ function QuestionList() {
                                     if(searchText === "") 
                                         return question
                                     else if(question.questionText.toLowerCase().includes(searchText.toLowerCase()))
-                                        return question
+                                        return question;
+                                        
                             }).slice(pagesVisited,pagesVisited + questionPerPage).map((question,ind) =>
 
+                        
                         <div key={question._id}>
                             <div style={{textAlign:"left"}} >
-
+                                
                                 <input data-toggle="tooltip" id="checkbox-2" title="Select all" type="checkbox" 
                                 style={{marginRight:"8px",marginTop:"16px"}}/>
 
@@ -238,6 +272,7 @@ function QuestionList() {
                                 )
                                 :
                                 (
+                                    
                                     <div className="text-center col-sm-6 offset-sm-3 col-lg-4 offset-lg-4">
                                         <img style={{height:"200px"}} className="img-fluid" src={NoQuesImg} />
                                             <div style={{fontSize:"20px"}} className="text-muted mt-2 display-large">No questions available</div>

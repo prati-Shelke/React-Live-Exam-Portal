@@ -1,7 +1,7 @@
 import React from 'react'
 const Footer = () => {
     return (
-        <div className="footer mt-5">
+        <div className="footer" style={{marginTop:"-20px"}}>
             <div className="container mt-5">
                 <ul className="nav justify-content-center">
                     <li className="nav-item">

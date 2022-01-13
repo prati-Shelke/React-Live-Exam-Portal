@@ -12,17 +12,19 @@ import '../node_modules/react-quill/dist/quill.snow.css';
 
 
 
-function Form({QueObject,setQueObject,handleError}) 
+function Form({QueObject,setQueObject,handleError,richText,setrichText}) 
 {
 
     
     let navigate = useNavigate()
     let flag = 0
+
+
     //-----------------------all values from api------------------------
     
     const [AllSubject,setAllSubject] = useState()
     const [AllTopic,setAllTopic] = useState()
-    const [richText , setrichText] = useState(false)
+    
 
 
     useEffect(async() => {
@@ -100,14 +102,42 @@ function Form({QueObject,setQueObject,handleError})
 
             case 'questionText' :
                 {
-                    setQueObject({...QueObject , questionText : value})
-                    richText!=true && handleError('qText',value)
+                    
+                    
+                    let hasText = !!value.replace(/(<([^>]+)>)/ig, "").length;
+                    
+                    if (value.includes("<img")) 
+                    {
+                        handleError('richQueText',value)
+                        setQueObject({...QueObject , questionText : value})
+                    }
+                    else if((!hasText && richText === true) || value==="<p> </p>")
+                    {
+                        console.log("hi1",value);
+                        handleError('richQueText','')
+                        value = ''
+                        setQueObject({...QueObject , questionText : value})
+                    }
+                    else if(hasText && richText === true)
+                    {
+                        console.log("hi2");
+                        handleError('richQueText',value)
+                        setQueObject({...QueObject , questionText : value})
+                    }
+                    else
+                    {
+                        handleError('qText',value)
+                        setQueObject({...QueObject , questionText : value})
+                    }
                     break;
+                    
                 }
         }
         
     }
-    
+    // console.log(QueObject);
+
+
     //-----------------------------to check whether option has duplicate value--------------------------
     const hasDuplicateOption = () =>
     {
@@ -121,7 +151,7 @@ function Form({QueObject,setQueObject,handleError})
                 {
                     if(QueObject.options[i].option == QueObject.options[j].option)
                     {
-                        handleError(`DuplicateOpt`,'falg')
+                        handleError(`DuplicateOpt`,'flag')
                         flag = 1
                     }
                 }
@@ -135,14 +165,33 @@ function Form({QueObject,setQueObject,handleError})
     //----------------------to add options in object-------------------
     const handleChange = (val , ind) =>
     {
-        
-        val.includes('<br>') && (val = '')
-        QueObject.options[ind].option = val
-        setQueObject({...QueObject})
+       
+        let hasText = !!val.replace(/(<([^>]+)>)/ig, "").length;
+        if (val.includes("<img")) 
+        {
+            handleError(`Option${ind+1}`,val)
+            QueObject.options[ind].option = val
+            setQueObject({...QueObject})
+            
+        }
+        else if((!hasText && QueObject.options[ind].richTextEditor === true) || val==="<p> </p>")
+        {
+            console.log("hi1",val);
+            handleError(`Option${ind+1}`,'')
+            val = ''
+            QueObject.options[ind].option = val
+            setQueObject({...QueObject})
+        }
+        else 
+        {console.log("hi2");
+            handleError(`Option${ind+1}`,val)
+            QueObject.options[ind].option = val
+            setQueObject({...QueObject})
+            
+        }
         hasDuplicateOption()
-        handleError(`Option${ind+1}`,val)
     }
-    console.log(QueObject);
+    
 
 
     //----------------------to set checked option--------------------------
@@ -350,7 +399,7 @@ function Form({QueObject,setQueObject,handleError})
                                     </textarea>
 
                                     <div style={{textAlign:'left'}}>
-                                        <a className='text-muted' href="#" onClick={()=>setrichText(true)}>
+                                        <a className='text-muted' style={{cursor:"pointer"}} onClick={()=>setrichText(true)}>
                                             Enable Rich text editor
                                         </a>
                                     </div>
@@ -366,14 +415,16 @@ function Form({QueObject,setQueObject,handleError})
                                         onChange={(e)=>handleSelectedField(e,'questionText')}
                                         value = {QueObject.questionText}
                                         style={{height:"12rem",marginBottom:"3rem"}}
+                                        
                                     />
                                 </div>
 
                                 <div style={{textAlign:'left'}}>
-                                    <a className='text-muted' href="#" onClick={()=>setrichText(false)} >
+                                    <a className='text-muted' style={{cursor:"pointer"}} onClick={()=>setrichText(false)} >
                                         Disable Rich text editor
                                     </a>
                                 </div>
+                                <span  id="richQueText" style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}>Question Text is required</span>&nbsp;&nbsp;
                              
                             </>
                         }
@@ -414,7 +465,7 @@ function Form({QueObject,setQueObject,handleError})
                                             
                                             <span className="text -muted"> | </span>
 
-                                            <a _ngcontent-waj-c5="" className="text-muted" href="#" onClick={()=>opt.richTextEditor = true}>
+                                            <a _ngcontent-waj-c5="" className="text-muted" style={{cursor:"pointer"}} onClick={()=>{opt.richTextEditor = true ; setQueObject({...QueObject})}}>
                                                 Enable Rich text editor
                                             </a>
                                         </div>  &nbsp;&nbsp; 
@@ -424,12 +475,13 @@ function Form({QueObject,setQueObject,handleError})
                                     <>
                                         <div className="questxt" style={{ display: opt.richTextEditor ? 'block' : 'none'}}>
                                             <ReactQuill theme={'snow'} 
+                                                id="option"
                                                 placeholder="Insert text here..."
                                                 modules={Form.modules}
                                                 formats={Form.formats}
                                                 onChange={(e)=>handleChange(e,ind)}
                                                 value = {opt.option}
-                                                onBlur = {(e)=>handleError(`Option${ind+1}`,opt.option)}
+                                                onBlur = {(e)=>opt.option ? handleError(`Option${ind+1}`,'flag') : handleError(`Option${ind+1}`,opt.option) }
                                                 
                                             />
                                         </div>
@@ -441,7 +493,7 @@ function Form({QueObject,setQueObject,handleError})
                                             
                                             <span className="text -muted"> | </span>
 
-                                            <a _ngcontent-waj-c5="" className="text-muted" href="#" onClick={()=>opt.richTextEditor = false}>
+                                            <a _ngcontent-waj-c5="" className="text-muted" style={{cursor:"pointer"}} onClick={()=>{opt.richTextEditor = false ; setQueObject({...QueObject})}}>
                                                 Disable Rich text editor
                                             </a>
                                         </div>  &nbsp;&nbsp; 
@@ -475,13 +527,14 @@ function Form({QueObject,setQueObject,handleError})
 
 Form.modules = {
     toolbar: [
-        ["bold", "italic"],
-        ["code-block","blockquote", "underline"],
-        [{ list: "ordered" }, { list: "bullet" }],
-        [ { script: "super" }],
-        [{ header: [1, 2, 3, 4, 5, 6, false] }],
-        [{ color: [] }, { background: [] }, { align: [] }],
-        ["link", "image", "video"],
+      [{ 'header': '1' }, { 'header': '2' }, { 'font': [] }],
+      [{ size: [] }],
+      ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+      [{ 'list': 'ordered' }, { 'list': 'bullet' },
+      { 'indent': '-1' }, { 'indent': '+1' }],
+      ['link', 'image', 'video'],
+      ['clean'],
+      ['code-block']
     ],
     clipboard: {
       // toggle to add extra line breaks when pasting HTML:
@@ -490,11 +543,9 @@ Form.modules = {
   }
   
   Form.formats = [
-    'font', 'size',
+    'header', 'font', 'size',
     'bold', 'italic', 'underline', 'strike', 'blockquote',
     'list', 'bullet', 'indent',
     'link', 'image', 'video'
   ]
 export default Form;
-
-
