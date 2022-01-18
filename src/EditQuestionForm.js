@@ -1,17 +1,23 @@
 import React,{useEffect,useState} from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import http from './http';
+import NavBar from "./NavBar";
 import {AiOutlinePlus} from 'react-icons/ai'
 import { setSelectionRange } from '@testing-library/user-event/dist/utils';
 import QuestionList from './QuestionList';
 import {BiX} from 'react-icons/bi'
+
 import ReactQuill from 'react-quill';
 import '../node_modules/react-quill/dist/quill.snow.css';
+
+import {ThreeDots} from 'react-loader-spinner';
+import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
+
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 toast.configure()
 
-function EditQuestionForm({handleDisplayNavbar}) 
+function EditQuestionForm({handleDisplayNavbar,display}) 
 {
 
    
@@ -97,7 +103,7 @@ function EditQuestionForm({handleDisplayNavbar})
     {
                         
         let error = document.getElementById(`${field}`)   
-        console.log(error)
+        // console.log(error)
         if(field === 'CorrectOpt')
         {
             if(value !== '')
@@ -276,14 +282,14 @@ function EditQuestionForm({handleDisplayNavbar})
         let hasText = !!val.replace(/(<([^>]+)>)/ig, "").length;
         if((!hasText && QueObject.options[ind].richTextEditor === true) || val==="<p> </p>")
         {
-            console.log("hi1",val);
+           
             handleError(`Option${ind+1}`,'')
             val = ''
             QueObject.options[ind].option = val
             setQueObject({...QueObject})
         }
         else 
-        {console.log("hi2");
+        {
             handleError(`Option${ind+1}`,val)
             QueObject.options[ind].option = val
             setQueObject({...QueObject})
@@ -351,7 +357,7 @@ function EditQuestionForm({handleDisplayNavbar})
         navigate(-1)
         handleDisplayNavbar(true)
     }
-  
+    // console.log(QueObject);
 
     //------------------------------to check if any field empty or not before edit question------------------------------------------------
     const hasAnyFieldEmpty = () =>
@@ -429,7 +435,7 @@ function EditQuestionForm({handleDisplayNavbar})
             if(IsDuplicate == true)
             {
                 hasError = true
-                console.log(hasDuplicateOption);
+                // console.log(hasDuplicateOption);
             }
             else 
             {
@@ -439,7 +445,7 @@ function EditQuestionForm({handleDisplayNavbar})
                     hasError = true
                 }
             }
-            console.log(hasError);
+            // console.log(hasError);
             return hasError
     }
     
@@ -448,7 +454,7 @@ function EditQuestionForm({handleDisplayNavbar})
     //---------------------to add notification after question is added---------------------------------------
     const notify = () => 
     {
-        console.log("hi");
+        
         toast.success('Question updated successfully!',
         { position: toast.POSITION.BOTTOM_RIGHT, autoClose: 3000 })
     }
@@ -456,9 +462,11 @@ function EditQuestionForm({handleDisplayNavbar})
     //------------------------------Post question into api after clicking on save question button-----------------------
     const editQuestion = async() =>
     {
-        console.log(!hasAnyFieldEmpty());
+        // console.log(!hasAnyFieldEmpty());
+        
         if(!hasAnyFieldEmpty() && hasChecked === true)
         {
+            setDotSpinner(true)
             await http.put(`/questions/${queId}`,QueObject)
             notify()
             navigate(-1)
@@ -470,290 +478,303 @@ function EditQuestionForm({handleDisplayNavbar})
 
 
     return (
-        <div className='container'>
-            <div className="card text-center" style={{margin:'40px'}}>
-                <div className="card-header" style={{fontWeight:'bold', fontSize:'26px',textAlign:'left'}}>
-                    Edit Question
-                    {fullscreen === true ?
-                        <i className='bx bx-fullscreen' onClick={()=>handleOnclick('full')} style={{cursor:'pointer',float:'right'}} ></i>
-                    :  
-                        <i className='bx bx-exit-fullscreen bx-flip-horizontal' onClick={()=>handleOnclick('small')} style={{cursor:'pointer',float:'right'}}></i>}
-                </div>
-            
-                <div className="card-body">
+
+        <>
+            {display===true ? 
+            <NavBar /> : <></>}  
+                <div className='container'>
+                    <div className="card text-center" style={{margin:'40px'}}>
+                        <div className="card-header" style={{fontWeight:'bold', fontSize:'26px',textAlign:'left'}}>
+                            Edit Question
+                            {fullscreen === true ?
+                                <i className='bx bx-fullscreen' onClick={()=>handleOnclick('full')} style={{cursor:'pointer',float:'right'}} ></i>
+                            :  
+                                <i className='bx bx-exit-fullscreen bx-flip-horizontal' onClick={()=>handleOnclick('small')} style={{cursor:'pointer',float:'right'}}></i>}
+                        </div>
                     
-            
-                    <form >                    
-                        <div className="form-row">
-                            <div className="form-group col-md-6 ">
-                                    <div style={{textAlign:'left'}}>
-                                        <label> Select Subject  </label>
-                                    </div>
-
-                                    <select required className="form-control" style={{position:"relative"}} value={QueObject.subject ? QueObject.subject : "DEFAULT"}  
-                                        // onBlur={(e)=>handleError(e.target.value , 'Subject')} 
-                                        onChange={(e)=>handleSelectedField(e.target.value,'subject')}>
-                                        <option disabled hidden value="DEFAULT">Type to search subject....</option>
-                                        {AllSubject ? AllSubject.map((sub)=>   
-                                        (
-                                            <option key={sub._id} value={sub._id}>{sub.name} </option>
-                                            
-                                        )) : ('')}
-                                    </select>
-
-                                    {QueObject.subject &&
-                                        <span className="cancel" style={{position:"absolute",top:"38px",right:"0",marginRight: "30px",cursor:"pointer"}}> 
-                                            <BiX size={18} className='text-muted' 
-                                                onClick = {()=>{
-                                                                    setQueObject({...QueObject , subject : '' , topic : ''});
-                                                                    handleError( 'Subject','DEFAULT')
-                                                                }}
-                                            />
-                                        </span>}
-                                    <span  id = "Subject" style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}> Subject is required</span>
-                            </div>
+                        <div className="card-body">
                             
-                            <div className="form-group col-md-6">
-                                    <div style={{textAlign:'left'}}>
-                                        <label >Select Topic</label>
-                                    </div>
-                            
-                                    <select className="form-control" style={{position:"relative"}} value={QueObject.topic ? QueObject.topic : "DEFAULT"} onChange={(e)=>handleSelectedField(e.target.value,'topic')}
-                                    // onBlur={(e)=>handleError(e.target.value , 'Topic')} 
-                                    >
-                                    <option value="DEFAULT" disabled hidden>Type to search topic....</option>
-                                    {AllTopic ? AllTopic.map((top,i) =>
-                                    (   top.subject._id === QueObject.subject &&
-                                        <option key={i} value={top._id}> {top.name} </option>
-                                    )) : ('')}
-                                    </select>
-                                    {QueObject.topic &&
-                                        <span className="cancel" style={{position:"absolute",top:"38px",right:"0",marginRight: "30px",cursor:"pointer"}}> 
-                                            <BiX size={18} className='text-muted' 
-                                                onClick={()=>{
-                                                                setQueObject({...QueObject , topic : ''})
-                                                                handleError('Topic' ,  'DEFAULT')
-                                                            }} 
-                                            />
-                                        </span>}
-                                    <span  id="Topic" style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}> Topic is required </span>
-                            </div>
-                        </div>
-
-                        <div className="form-row">
-                            <div className="form-group col-md-3">
-                                    <div style={{textAlign:'left'}}>
-                                        <label> Question Type  </label>
-                                    </div>
-
-                                    <select id="inputState" style={{position:"relative"}} value={QueObject.type ? QueObject.type : "DEFAULT"} className="form-control"
-                                    // onBlur={(e)=> handleError(e.target.value , 'Type')}  
-                                    onChange={(e)=>handleSelectedField(e.target.value,'type')}>
-                                        <option value="DEFAULT" disabled hidden>Type to search ....</option>
-                                        <option value="MULTIPLE CHOICE"> MULTIPLE CHOICE </option>
-                                        <option value='MULTIPLE RESPONSE'> MULTIPLE RESPONSE </option>
-                                        <option value='FILL IN BLANKS'> FILL IN BLANKS </option>
-                                    </select>
-                            
-                                    {QueObject.type &&
-                                    <span className="cancel" style={{position:"absolute",top:"42px",right:"0",marginRight: "40px",cursor:"pointer"}}> 
-                                        <BiX size={18} className='text-muted position-absolute'
-                                            onClick={()=>{
-                                                            setQueObject({...QueObject , type : ''})
-                                                            handleError('Type', 'DEFAULT')
-                                                        }} 
-                                        />
-                                    </span>}
-
-                                    <span  id="Type" style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}>Question Type is required</span>
-                            </div>
-
-                            <div className="form-group col-md-3">
-                                    <div style={{textAlign:'left'}}>
-                                        <label> Difficulty Level  </label>
-                                    </div>
-
-                                {QueObject.diffLevel &&
-                                    <span className="cancel" style={{position:"absolute",top:"42px",right:"0",marginRight: "40px",cursor:"pointer"}}> 
-                                        <BiX size={18} className='text-muted position-absolute'  
-                                            onClick={()=>{
-                                                            setQueObject({...QueObject , diffLevel : ''})
-                                                            handleError('Difficulty level' , 'DEFAULT')
-                                            }} />
-                                    </span>}
-
-                                    <select id="inputState" className="form-control" value={QueObject.diffLevel ? QueObject.diffLevel : "DEFAULT"} onChange={(e)=>handleSelectedField(e.target.value,'diffLevel')}>
-                                        <option value="DEFAULT" disabled hidden>Type to search ....</option>
-                                        <option > Easy </option>
-                                        <option > Medium </option>
-                                        <option > Hard </option>
-                                    </select>
-
-                                    <span  id="Difficulty level" style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}> Difficulty level is required</span>
-                            </div>
-
-                            <div className="form-group col-md-3">
-                                    <div style={{textAlign:'left'}}>
-                                        <label> Right Marks  </label>
-                                    </div>
-
-                                    <input type="text" id="Rmarks" className="form-control" onBlur={(e)=>handleError('Right marks',e.target.value)} value={QueObject.rightMarks ? QueObject.rightMarks : ''} placeholder={QueObject.rightMarks ? " " :  'Enter right marks'} 
-                                    onChange={(e)=>handleSelectedField(e.target.value,'rightMarks')}/>
-                                    <span  id="Right marks" style={{color:"red",display:"none", float:"left",fontSize:"12px",marginTop:"4px"}}> Right marks is required </span>
-                            </div>
-
-                            <div className="form-group col-md-3">
-                                    <div style={{textAlign:'left'}}>
-                                        <label> Wrong Marks  </label>
-                                    </div>
-
-                                    <input type="text" id="Wmarks" className="form-control"  onBlur={(e)=>handleError('Wrong marks',e.target.value )} value={QueObject.wrongMarks===0 || QueObject.wrongMarks ? QueObject.wrongMarks : ''}  placeholder={QueObject.wrongMarks ? " " :  'Enter wrong marks'}  
-                                    onChange={(e)=>handleSelectedField(e.target.value,'wrongMarks')}/>
-                                    <span  id="Wrong marks" style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}> Wrong marks is required </span>
-                            </div>
-
-                        </div>
-
-                        <div className="form-group">
-                                <div style={{textAlign:'left'}}>
-                                    <label>Question</label>
-                                </div>
-                            
-                                { richText === false ?
-                                <>
-                                    <div className="questxt" style={{ display: richText ? 'none' : 'block' }}>
-                                        <textarea className="form-control" id="qText" onBlur={(e)=> handleError('qText',e.target.value)} onChange={(e)=>handleSelectedField(e.target.value,'questionText')}
-                                        value={QueObject.questionText}  formcontrolname="questionText" rows="6">
-                                        </textarea>
-
-                                        <div style={{textAlign:'left'}}>
-                                            <a className='text-muted' style={{cursor:"pointer"}} onClick={()=>setrichText(true)}>
-                                                Enable Rich text editor
-                                            </a>
-                                        </div>
-                                    </div>
-                                </>
-                                :
-                                <>
-                                    <div className="questxt" style={{ display: richText ? 'block' : 'none'}}>
-                                        <ReactQuill theme={'snow'} id="qText"
-                                            placeholder="Insert text here..."
-                                            modules={EditQuestionForm.modules}
-                                            formats={EditQuestionForm.formats}
-                                            onChange={(e)=>handleSelectedField(e,'questionText')}
-                                            value = {QueObject.questionText}
-                                            style={{height:"12rem",marginBottom:"3rem"}}
-                                        />
-                                    </div>
-
-                                    <div style={{textAlign:'left'}}>
-                                        <a className='text-muted' style={{cursor:"pointer"}} onClick={()=>setrichText(false)} >
-                                            Disable Rich text editor
-                                        </a>
-                                    </div>
-                                    <span  id="richQueText" style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}>Question Text is required</span>&nbsp;&nbsp;
-                                </>
-                                }
-                        </div>  
-
-                        <div className='form-group'>
-                                <div style={{textAlign:'left'}}>
-                                            <label> Options </label>
-                                </div>
-
-                                { QueObject.options.length ?
-                                (
-                                    QueObject.options.map((opt,ind) =>
-                                    <div className="input-group" key={ind} style={{marginTop:"30px"}}>
-                                        <div className="input-group-prepend">
-                                            <div className="input-group-text">
-                                                <input type={QueObject.type==="MULTIPLE CHOICE" || QueObject.type==="FILL IN BLANKS" ? "radio" : "checkbox"} 
-                                                    aria-label="Radio button for following text input" 
-                                                    style={{marginRight:"6px" }} 
-                                                    onChange={()=>handleChecked(ind)}
-                                                    checked={!!opt.isCorrect}
-                                                    name="a"
-                                                />
-                                                Option {ind+1}
+                    
+                            <form >                    
+                                <div className="form-row">
+                                    <div className="form-group col-md-6 ">
+                                            <div style={{textAlign:'left'}}>
+                                                <label> Select Subject  </label>
                                             </div>
+
+                                            <select required className="form-control" style={{position:"relative"}} value={QueObject.subject ? QueObject.subject : "DEFAULT"}  
+                                                // onBlur={(e)=>handleError(e.target.value , 'Subject')} 
+                                                onChange={(e)=>handleSelectedField(e.target.value,'subject')}>
+                                                <option disabled hidden value="DEFAULT">Type to search subject....</option>
+                                                {AllSubject ? AllSubject.map((sub)=>   
+                                                (
+                                                    <option key={sub._id} value={sub._id}>{sub.name} </option>
+                                                    
+                                                )) : ('')}
+                                            </select>
+
+                                            {QueObject.subject &&
+                                                <span className="cancel" style={{position:"absolute",top:"38px",right:"0",marginRight: "30px",cursor:"pointer"}}> 
+                                                    <BiX size={18} className='text-muted' 
+                                                        onClick = {()=>{
+                                                                            setQueObject({...QueObject , subject : '' , topic : ''});
+                                                                            handleError( 'Subject','DEFAULT')
+                                                                        }}
+                                                    />
+                                                </span>}
+                                            <span  id = "Subject" style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}> Subject is required</span>
+                                    </div>
+                                    
+                                    <div className="form-group col-md-6">
+                                            <div style={{textAlign:'left'}}>
+                                                <label >Select Topic</label>
+                                            </div>
+                                    
+                                            <select className="form-control" style={{position:"relative"}} value={QueObject.topic ? QueObject.topic : "DEFAULT"} onChange={(e)=>handleSelectedField(e.target.value,'topic')}
+                                            // onBlur={(e)=>handleError(e.target.value , 'Topic')} 
+                                            >
+                                            <option value="DEFAULT" disabled hidden>Type to search topic....</option>
+                                            {AllTopic ? AllTopic.map((top,i) =>
+                                            (   top.subject._id === QueObject.subject &&
+                                                <option key={i} value={top._id}> {top.name} </option>
+                                            )) : ('')}
+                                            </select>
+                                            {QueObject.topic &&
+                                                <span className="cancel" style={{position:"absolute",top:"38px",right:"0",marginRight: "30px",cursor:"pointer"}}> 
+                                                    <BiX size={18} className='text-muted' 
+                                                        onClick={()=>{
+                                                                        setQueObject({...QueObject , topic : ''})
+                                                                        handleError('Topic' ,  'DEFAULT')
+                                                                    }} 
+                                                    />
+                                                </span>}
+                                            <span  id="Topic" style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}> Topic is required </span>
+                                    </div>
+                                </div>
+
+                                <div className="form-row">
+                                    <div className="form-group col-md-3">
+                                            <div style={{textAlign:'left'}}>
+                                                <label> Question Type  </label>
+                                            </div>
+
+                                            <select id="inputState" style={{position:"relative"}} value={QueObject.type ? QueObject.type : "DEFAULT"} className="form-control"
+                                            // onBlur={(e)=> handleError(e.target.value , 'Type')}  
+                                            onChange={(e)=>handleSelectedField(e.target.value,'type')}>
+                                                <option value="DEFAULT" disabled hidden>Type to search ....</option>
+                                                <option value="MULTIPLE CHOICE"> MULTIPLE CHOICE </option>
+                                                <option value='MULTIPLE RESPONSE'> MULTIPLE RESPONSE </option>
+                                                <option value='FILL IN BLANKS'> FILL IN BLANKS </option>
+                                            </select>
+                                    
+                                            {QueObject.type &&
+                                            <span className="cancel" style={{position:"absolute",top:"42px",right:"0",marginRight: "40px",cursor:"pointer"}}> 
+                                                <BiX size={18} className='text-muted position-absolute'
+                                                    onClick={()=>{
+                                                                    setQueObject({...QueObject , type : ''})
+                                                                    handleError('Type', 'DEFAULT')
+                                                                }} 
+                                                />
+                                            </span>}
+
+                                            <span  id="Type" style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}>Question Type is required</span>
+                                    </div>
+
+                                    <div className="form-group col-md-3">
+                                            <div style={{textAlign:'left'}}>
+                                                <label> Difficulty Level  </label>
+                                            </div>
+
+                                        {QueObject.diffLevel &&
+                                            <span className="cancel" style={{position:"absolute",top:"42px",right:"0",marginRight: "40px",cursor:"pointer"}}> 
+                                                <BiX size={18} className='text-muted position-absolute'  
+                                                    onClick={()=>{
+                                                                    setQueObject({...QueObject , diffLevel : ''})
+                                                                    handleError('Difficulty level' , 'DEFAULT')
+                                                    }} />
+                                            </span>}
+
+                                            <select id="inputState" className="form-control" value={QueObject.diffLevel ? QueObject.diffLevel : "DEFAULT"} onChange={(e)=>handleSelectedField(e.target.value,'diffLevel')}>
+                                                <option value="DEFAULT" disabled hidden>Type to search ....</option>
+                                                <option > Easy </option>
+                                                <option > Medium </option>
+                                                <option > Hard </option>
+                                            </select>
+
+                                            <span  id="Difficulty level" style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}> Difficulty level is required</span>
+                                    </div>
+
+                                    <div className="form-group col-md-3">
+                                            <div style={{textAlign:'left'}}>
+                                                <label> Right Marks  </label>
+                                            </div>
+
+                                            <input type="text" id="Rmarks" className="form-control" onBlur={(e)=>handleError('Right marks',e.target.value)} value={QueObject.rightMarks ? QueObject.rightMarks : ''} placeholder={QueObject.rightMarks ? " " :  'Enter right marks'} 
+                                            onChange={(e)=>handleSelectedField(e.target.value,'rightMarks')}/>
+                                            <span  id="Right marks" style={{color:"red",display:"none", float:"left",fontSize:"12px",marginTop:"4px"}}> Right marks is required </span>
+                                    </div>
+
+                                    <div className="form-group col-md-3">
+                                            <div style={{textAlign:'left'}}>
+                                                <label> Wrong Marks  </label>
+                                            </div>
+
+                                            <input type="text" id="Wmarks" className="form-control"  onBlur={(e)=>handleError('Wrong marks',e.target.value )} value={QueObject.wrongMarks===0 || QueObject.wrongMarks ? QueObject.wrongMarks : ''}  placeholder={QueObject.wrongMarks ? " " :  'Enter wrong marks'}  
+                                            onChange={(e)=>handleSelectedField(e.target.value,'wrongMarks')}/>
+                                            <span  id="Wrong marks" style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}> Wrong marks is required </span>
+                                    </div>
+
+                                </div>
+
+                                <div className="form-group">
+                                        <div style={{textAlign:'left'}}>
+                                            <label>Question</label>
                                         </div>
-                                        
-                                        {opt.richTextEditor === false ?
+                                    
+                                        { richText === false ?
                                         <>
-                                            <textarea className="form-control" onBlur={(e)=>handleError(`Option${ind+1}`,e.target.value)} style={{display:"block"}}
-                                                formcontrolname="questionText" rows="4" value={opt.option} onChange={(e)=>handleChange(e.target.value,ind)}>
-                                            </textarea>
+                                            <div className="questxt" style={{ display: richText ? 'none' : 'block' }}>
+                                                <textarea className="form-control" id="qText" onBlur={(e)=> handleError('qText',e.target.value)} onChange={(e)=>handleSelectedField(e.target.value,'questionText')}
+                                                value={QueObject.questionText}  formcontrolname="questionText" rows="6">
+                                                </textarea>
 
-                                            <div className='col-md-12' style={{textAlign:'left' , paddingLeft:'-10px',marginLeft:"-15px"}}>
-                                                <a className='text-muted' style={{cursor:"pointer"}} onClick={() => RemoveOption(ind)}>
-                                                    Remove option 
-                                                </a> 
-                                                
-                                                <span className="text -muted"> | </span>
-
-                                                <a _ngcontent-waj-c5="" className="text-muted" style={{cursor:"pointer"}} onClick={()=>{opt.richTextEditor = true ; setQueObject({...QueObject})}}>
-                                                    Enable Rich text editor
-                                                </a>
-                                            </div>  &nbsp;&nbsp; 
-                                            <span  id={`Option${ind+1}`} style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}>Option is required</span>                         
-                                        </> 
+                                                <div style={{textAlign:'left'}}>
+                                                    <a className='text-muted' href='/EditQuestionForm' style={{cursor:"pointer"}} onClick={()=>setrichText(true)}>
+                                                        Enable Rich text editor
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </>
                                         :
                                         <>
-                                            <div className="questxt" style={{ display: opt.richTextEditor ? 'block' : 'none'}}>
-                                                <ReactQuill theme={'snow'} 
+                                            <div className="questxt" style={{ display: richText ? 'block' : 'none'}}>
+                                                <ReactQuill theme={'snow'} id="qText"
                                                     placeholder="Insert text here..."
                                                     modules={EditQuestionForm.modules}
                                                     formats={EditQuestionForm.formats}
-                                                    onChange={(e)=>handleChange(e,ind)}
-                                                    value = {opt.option}
-                                                    onBlur = {(e)=>opt.option ? handleError(`Option${ind+1}`,'flag') : handleError(`Option${ind+1}`,opt.option) }
-                                                    
+                                                    onChange={(e)=>handleSelectedField(e,'questionText')}
+                                                    value = {QueObject.questionText}
+                                                    style={{height:"12rem",marginBottom:"3rem"}}
                                                 />
                                             </div>
 
-                                            <div className='col-md-12' style={{textAlign:'left' , paddingLeft:'-10px',marginLeft:"-15px"}}>
-                                                <a className='text-muted' style={{cursor:"pointer"}} onClick={() => RemoveOption(ind)}>
-                                                    Remove option 
-                                                </a> 
-                                                
-                                                <span className="text -muted"> | </span>
-
-                                                <a _ngcontent-waj-c5="" className="text-muted" style={{cursor:"pointer"}} onClick={()=>{opt.richTextEditor = false ; setQueObject({...QueObject})}}>
+                                            <div style={{textAlign:'left'}}>
+                                                <a className='text-muted' href='/EditQuestionForm' style={{cursor:"pointer"}} onClick={()=>setrichText(false)} >
                                                     Disable Rich text editor
                                                 </a>
-                                            </div>  &nbsp;&nbsp; 
-                                            <span  id={`Option${ind+1}`} style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}>Option is required</span>
+                                            </div>
+                                            <span  id="richQueText" style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}>Question Text is required</span>&nbsp;&nbsp;
                                         </>
-                                                                        
                                         }
-                                    
-                                    </div>)
-                                ) : (<div></div>)
-                                }
-                        </div> 
+                                </div>  
+
+                                <div className='form-group'>
+                                        <div style={{textAlign:'left'}}>
+                                                    <label> Options </label>
+                                        </div>
+
+                                        { QueObject.options.length ?
+                                        (
+                                            QueObject.options.map((opt,ind) =>
+                                            <div className="input-group" key={ind} style={{marginTop:"30px"}}>
+                                                <div className="input-group-prepend">
+                                                    <div className="input-group-text">
+                                                        <input type={QueObject.type==="MULTIPLE CHOICE" || QueObject.type==="FILL IN BLANKS" ? "radio" : "checkbox"} 
+                                                            aria-label="Radio button for following text input" 
+                                                            style={{marginRight:"6px" }} 
+                                                            onChange={()=>handleChecked(ind)}
+                                                            checked={!!opt.isCorrect}
+                                                            name="a"
+                                                        />
+                                                        Option {ind+1}
+                                                    </div>
+                                                </div>
+                                                
+                                                {opt.richTextEditor === false ?
+                                                <>
+                                                    <textarea className="form-control" onBlur={(e)=>handleError(`Option${ind+1}`,e.target.value)} style={{display:"block"}}
+                                                        formcontrolname="questionText" rows="4" value={opt.option} onChange={(e)=>handleChange(e.target.value,ind)}>
+                                                    </textarea>
+
+                                                    <div className='col-md-12' style={{textAlign:'left' , paddingLeft:'-10px',marginLeft:"-15px"}}>
+                                                        <a className='text-muted' href='/EditQuestionForm' style={{cursor:"pointer"}} onClick={() => RemoveOption(ind)}>
+                                                            Remove option 
+                                                        </a> 
+                                                        
+                                                        <span className="text -muted"> | </span>
+
+                                                        <a _ngcontent-waj-c5="" href='/EditQuestionForm' className="text-muted" style={{cursor:"pointer"}} onClick={()=>{opt.richTextEditor = true ; setQueObject({...QueObject})}}>
+                                                            Enable Rich text editor
+                                                        </a>
+                                                    </div>  &nbsp;&nbsp; 
+                                                    <span  id={`Option${ind+1}`} style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}>Option is required</span>                         
+                                                </> 
+                                                :
+                                                <>
+                                                    <div className="questxt" style={{ display: opt.richTextEditor ? 'block' : 'none'}}>
+                                                        <ReactQuill theme={'snow'} 
+                                                            placeholder="Insert text here..."
+                                                            modules={EditQuestionForm.modules}
+                                                            formats={EditQuestionForm.formats}
+                                                            onChange={(e)=>handleChange(e,ind)}
+                                                            value = {opt.option}
+                                                            onBlur = {(e)=>opt.option ? handleError(`Option${ind+1}`,'flag') : handleError(`Option${ind+1}`,opt.option) }
+                                                            
+                                                        />
+                                                    </div>
+
+                                                    <div className='col-md-12' style={{textAlign:'left' , paddingLeft:'-10px',marginLeft:"-15px"}}>
+                                                        <a className='text-muted' href='/EditQuestionForm' style={{cursor:"pointer"}} onClick={() => RemoveOption(ind)}>
+                                                            Remove option 
+                                                        </a> 
+                                                        
+                                                        <span className="text -muted"> | </span>
+
+                                                        <a  href='/EditQuestionForm' className="text-muted" style={{cursor:"pointer"}} onClick={()=>{opt.richTextEditor = false ; setQueObject({...QueObject})}}>
+                                                            Disable Rich text editor
+                                                        </a>
+                                                    </div>  &nbsp;&nbsp; 
+                                                    <span  id={`Option${ind+1}`} style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}>Option is required</span>
+                                                </>
+                                                                                
+                                                }
+                                            
+                                            </div>)
+                                        ) : (<div></div>)
+                                        }
+                                </div> 
+                                
+
+                                <div className="my-3">
+                                    <div style={{textAlign:'left'}}> 
+                                        <a className="text-decoration-none" style={{cursor:"pointer"}} onClick={AddOption}>
+                                            <AiOutlinePlus size={18} style={{marginBottom:"4px",marginRight:"6px"}}/> 
+                                                Add option 
+                                        </a>
+                                    </div>
+                                    <span id="CorrectOpt" style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}>Please select correct answer from options </span><br/>
+                                    <span id="DuplicateOpt" style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}>Duplicate options are not allowed.</span>
+                                </div>      
+                            </form>
+
+                    
+                        </div>
+                        <div className="card-footer text-muted" style={{textAlign:'left'}}>
+                        { DotSpinner ? 
+                                <button type="button" className="btn btn-primary" style={{height:'50px',width:'180px',fontSize:'18px'}} onClick={editQuestion} disabled>
+                                    <div style={{marginLeft:"60px"}}>
+                                    <ThreeDots style={{marginBottom:"10px"}} color="white"  height={40} width={40}/>
+                                    </div>
+                                </button>
+                            :
+                                <button type="button" className="btn btn-primary" style={{height:'50px',width:'180px',fontSize:'18px'}} onClick={editQuestion}>Update Question</button> 
+                            }
+                            &nbsp;&nbsp;&nbsp;<button type="button" className="btn btn-light" style={{height:'50px'}} onClick={handleCancel} >Cancel</button>
+                        </div>
                         
-
-                        <div className="my-3">
-                            <div style={{textAlign:'left'}}> 
-                                <a className="text-decoration-none" style={{cursor:"pointer"}} onClick={AddOption}>
-                                    <AiOutlinePlus size={18} style={{marginBottom:"4px",marginRight:"6px"}}/> 
-                                        Add option 
-                                </a>
-                            </div>
-                            <span id="CorrectOpt" style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}>Please select correct answer from options </span><br/>
-                            <span id="DuplicateOpt" style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}>Duplicate options are not allowed.</span>
-                        </div>      
-                    </form>
-
-            
+                    </div>
                 </div>
-                <div className="card-footer text-muted" style={{textAlign:'left'}}>
-                    <button type="button" className="btn btn-primary" style={{height:'50px',width:'180px',fontSize:'18px'}} onClick={editQuestion}>Update Question</button> &nbsp;&nbsp;
-                    <button type="button" className="btn btn-light" style={{height:'50px'}} onClick={handleCancel} >Cancel</button>
-                </div>
-                
-            </div>
-        </div>
+        </>
     )
 }
 
@@ -783,3 +804,17 @@ EditQuestionForm.modules = {
   ]
 
 export default EditQuestionForm
+
+// { DotSpinner ? 
+//     <button type="button" className="btn btn-primary" style={{height:'50px',width:'180px',fontSize:'18px'}} onClick={editQuestion}>
+//         <Loader type="ThreeDots" height={80} width={80}/>
+//     </button>
+// :
+//     <button type="button" className="btn btn-primary" style={{height:'50px',width:'180px',fontSize:'18px'}} onClick={editQuestion}>Update Question</button> 
+// }
+
+{/* <div className="card-footer text-muted" style={{textAlign:'left'}}>
+                    <button type="button" className="btn btn-primary" style={{height:'50px',width:'180px',fontSize:'18px'}} onClick={editQuestion}>{DotSpinner ? <Loader type="ThreeDots" height={80} width={80}/> :'Update Question'}</button> &nbsp;&nbsp;
+                    <button type="button" className="btn btn-light" style={{height:'50px'}} onClick={handleCancel} >Cancel</button>
+                </div>
+                 */}

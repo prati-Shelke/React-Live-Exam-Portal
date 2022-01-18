@@ -2,19 +2,26 @@ import React,{useState} from 'react'
 import {useNavigate } from 'react-router-dom';
 import http from './http';
 import Form from './Form';
+import NavBar from "./NavBar";
+
+import {ThreeDots} from 'react-loader-spinner';
+import "react-loader-spinner/dist/loader/css/react-spinner-loader.css";
+
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 toast.configure()
 
 
-function AddQuestionForm({handleDisplayNavbar}) 
+
+
+function AddQuestionForm({handleDisplayNavbar,display}) 
 {
 
     let navigate = useNavigate()
     let hasError = false , hasChecked = false
     let [hasDuplicateOption,sethasDuplicateOption] = useState(false)
     const [richText , setrichText] = useState(false) 
-
+    let [DotSpinner,setDotSpinner] = useState(false)
 
     let [QueObject,setQueObject] = useState({
         type : 'MULTIPLE CHOICE' ,
@@ -224,12 +231,14 @@ function AddQuestionForm({handleDisplayNavbar})
     }
     
     //------------------------------Post question into api after clicking on save question button-----------------------
-    const postQuestion = async() =>
+    const AddQuestion = async() =>
     {
 
             // console.log(!hasAnyFieldEmpty());
+            
             if(!hasAnyFieldEmpty() && hasChecked === true)
             {
+                setDotSpinner(true)
                 await http.post('/questions',QueObject)
                 notify()
                 navigate('/QuestionList')
@@ -241,27 +250,41 @@ function AddQuestionForm({handleDisplayNavbar})
     }
 
     return (
-        <div className='container'>
-            <div className="card text-center" style={{margin:'40px'}}>
-                <div className="card-header" style={{fontWeight:'bold', fontSize:'26px',textAlign:'left'}}>
-                    Add Question
-                    {fullscreen === true ?
-                        <i className='bx bx-fullscreen' onClick={()=>handleOnclick('full')} style={{cursor:'pointer',float:'right'}} ></i>
-                    :  
-                        <i className='bx bx-exit-fullscreen bx-flip-horizontal' onClick={()=>handleOnclick('small')} style={{cursor:'pointer',float:'right'}}></i>}
-                </div>
-            
-                <div className="card-body"> 
-                    <Form QueObject={QueObject} setQueObject={setQueObject} handleError={handleError} richText={richText} setrichText={setrichText}/>
-                </div>
+        
+            <>
+                {display===true ? 
+                <NavBar /> : <></>}   
+                <div className='container'>
+                    <div className="card text-center" style={{margin:'40px'}}>
+                        <div className="card-header" style={{fontWeight:'bold', fontSize:'26px',textAlign:'left'}}>
+                            Add Question
+                            {fullscreen === true ?
+                                <i className='bx bx-fullscreen' onClick={()=>handleOnclick('full')} style={{cursor:'pointer',float:'right'}} ></i>
+                            :  
+                                <i className='bx bx-exit-fullscreen bx-flip-horizontal' onClick={()=>handleOnclick('small')} style={{cursor:'pointer',float:'right'}}></i>}
+                        </div>
+                    
+                        <div className="card-body"> 
+                            <Form QueObject={QueObject} setQueObject={setQueObject} handleError={handleError} richText={richText} setrichText={setrichText}/>
+                        </div>
 
-                <div className="card-footer text-muted" style={{textAlign:'left'}}>
-                    <button type="button" className="btn btn-primary" style={{height:'50px',width:'160px',fontSize:'18px'}} onClick={postQuestion}>Save Question</button> &nbsp;&nbsp;
-                    <button type="button" className="btn btn-light" style={{height:'50px'}} onClick={handleCancel}  >Cancel</button>
+                        <div className="card-footer text-muted" style={{textAlign:'left'}}>
+                        { DotSpinner ? 
+                                <button type="button" className="btn btn-primary" style={{height:'50px',width:'180px',fontSize:'18px'}} onClick={AddQuestion} disabled>
+                                    <div style={{marginLeft:"60px"}}>
+                                    <ThreeDots style={{marginBottom:"10px"}} color="white"  height={40} width={40}/>
+                                    </div>
+                                </button>
+                            :
+                                <button type="button" className="btn btn-primary" style={{height:'50px',width:'180px',fontSize:'18px'}} onClick={AddQuestion}>Save Question</button> 
+                        }&nbsp;&nbsp;&nbsp;
+                            
+                            <button type="button" className="btn btn-light" style={{height:'50px'}} onClick={handleCancel}  >Cancel</button>
+                        </div>
+                        
+                    </div>
                 </div>
-                
-            </div>
-        </div>
+            </>
     )
 }
 

@@ -1,12 +1,28 @@
 import axios from 'axios'
 
 
-const accessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MTlkYmExNWU1ODY4NTE0NjEwYzhlNzUiLCJfYWN0aXZlT3JnIjoiNjE5Y2U0YThlNTg2ODUxNDYxMGM4ZGE3IiwiaWF0IjoxNjQyMDQ3OTM3LCJleHAiOjE2NDIwOTExMzd9.oQgmpn3BmimWw-lk5TOvajI2Bky6vt7P2CHVa6i6pp0'
+// const accessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI2MWRmZWE2ZGU2ZDdkNzdjOGU1MDRkMzYiLCJfYWN0aXZlT3JnIjoiNjE5Y2U0YThlNTg2ODUxNDYxMGM4ZGE3IiwiaWF0IjoxNjQyMTQ2MzkyLCJleHAiOjE2NDIxODk1OTJ9.peiro3rIyAS6zPZt9O7gL5KDFdCq7ObzBmJB7rlhB1k'
 
-export const authAxios =  axios.create({
+
+// const accessToken = JSON.parse(localStorage.getItem('token'))
+// const googleToken = JSON.parse(localStorage.getItem('googleToken'))
+const authAxios =  axios.create({
     baseURL : "http://admin.liveexamcenter.in/api",
-    headers: {
-        Authorization : `${accessToken}`
-    }
+    // headers: {
+    //     Authorization : accessToken ? `${accessToken}` : `${googleToken}`
+    // }
 });
+
+authAxios.interceptors.request.use(function (config) {
+    const accessToken = JSON.parse(localStorage.getItem('token'));
+    const googleToken = JSON.parse(localStorage.getItem('googleToken'))
+    
+    // const accessToken1 = Storage.get('token1');
+   
+    config.headers.Authorization =  accessToken ? `${accessToken}` : `${googleToken}` 
+    return config;
+    });
+
+export default authAxios
+
 

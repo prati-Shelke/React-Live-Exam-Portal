@@ -1,22 +1,26 @@
 import React,{useState,useEffect,useCallback} from 'react'
-import AMlogo from './AMlogo.svg'
+import AMlogo from './AMLogo.svg'
 import LoginImg from './LoginImg.png'
-import googleImg from './googleImg.svg'
-import eyeImg from './eye.svg'
+import googleImg from './GoogleImg.svg'
 import { useGoogleReCaptcha } from 'react-google-recaptcha-v3';
-
+import http from './http'
+// import axios from 'axios'
+import { useNavigate } from 'react-router-dom'
+import {BsFillEyeFill , BsFillEyeSlashFill} from 'react-icons/bs'
+import {GoogleLogin} from 'react-google-login'
+import { getSpaceUntilMaxLength } from '@testing-library/user-event/dist/utils';
  
 function LoginPage() 
 {
 
-
+    let navigate = useNavigate()
     let [Email,setEmail] = useState('')
     let [Password,setPassword] = useState('')
-    let [reCaptchaToken,setreCaptchaToken] = useState('')
+    let [Token,setToken] = useState('')
     let [ShowPass , setShowPass] = useState(false)
     
     const { executeRecaptcha } = useGoogleReCaptcha();
-    console.log(Email,Password);
+   
 
     // // Create an event handler so you can call the verification on button click event or form submit or gives recaptcha token
     const handleReCaptchaVerify = useCallback(async () => 
@@ -26,12 +30,12 @@ function LoginPage()
         return;
         }
 
-        const token = await executeRecaptcha('LOGIN');
-        // console.log(token);
-        setreCaptchaToken(token)
+        const temp = await executeRecaptcha('LOGIN');
+        
+        setToken(temp)
 
     },[executeRecaptcha])
-
+   
 
     // You can use useEffect to trigger the verification as soon as the component being loaded
     useEffect(() => {
@@ -39,20 +43,93 @@ function LoginPage()
     }, [handleReCaptchaVerify]);
     
 
-    const showPassword = () =>
+    //------------to show or to hide password -------------------------------------------------------
+    const handleShowPassword = () =>
     {
-        setShowPass(!ShowPass)
 
-        if(ShowPass === true)
+        if(ShowPass)
         {
-            document.getElementById('password').type = 'text'
+            document.getElementById('Password').type = 'password'
+            setShowPass(false)
         }
         else
         {
-            document.getElementById('password').type = 'password'
+            document.getElementById('Password').type = 'text'
+            setShowPass(true)
+            
         }
     }
 
+    //----------------------------------to check whether field is empty or not ------------------------------
+    const handleError = (value,field) =>
+    {
+        let error =  document.getElementById(`${field}`)
+        
+        if((field === 'email' || field === 'password') && value === '')
+        {
+            error.style.display = 'block'
+            field === 'email' && (document.getElementById('Email').className = 'form-control is-invalid')
+            field === 'password' && (document.getElementById('Password').className = 'form-control is-invalid')
+        }
+        else
+        {
+            error.style.display = 'none'
+            field === 'email' && (document.getElementById('Email').className = 'form-control')
+            field === 'password' && (document.getElementById('Password').className = 'form-control')
+        }
+    }
+
+
+    //--------------------------------after submiting details if valid then login otherwise login failed--------------
+    const handleSubmit = async(e) =>
+    {
+        e.preventDefault();
+
+        if(Email === '' || Password === '')
+        {
+            Email === '' && handleError('','email')
+            Password === '' && handleError('','password')
+
+        }
+        else
+        {
+            let btn = document.getElementById('btn')
+            btn.disabled = true  
+            btn.textContent = 'Logging in...' 
+
+            let loginDetails = {email : Email , password : Password , reCaptchaToken : Token}
+            try {
+                const data = await http.post('/auth/login',loginDetails)
+                // console.log(data);
+
+                localStorage.setItem('token' , JSON.stringify(data.token))
+                navigate('/QuestionList')
+            } 
+            catch (err) {
+                btn.disabled = false ;
+                btn.textContent = 'Log in';
+                console.log(`Error: ${err.message}`);
+            }
+        }
+    }
+
+
+    const responseGoogle = async(response) =>
+    {
+        let id_token = response.tokenObj.id_token
+        let loginDetails = {idToken : id_token , reCaptchaToken : Token}
+
+        try {
+            const data = await http.post('/auth/google',loginDetails)
+            // console.log(data);
+
+            localStorage.setItem('googleToken' , JSON.stringify(data.token))
+            navigate('/QuestionList')
+        } 
+        catch (err) {
+            console.log(`Error: ${err.message}`);
+        }
+    }
 
     return (
 
@@ -60,13 +137,13 @@ function LoginPage()
                 
                 <div className="container">
                     <h1 className="text-center">
-                        <img style={{height:"70px",marginTop:"20px"}} className="img-fluid" src={AMlogo} />
+                        <img style={{height:"70px",marginTop:"20px"}} className="img-fluid" alt="" src={AMlogo} />
                     </h1>
 
                     <div className="card-body">
                         <div className="row">
                             <div className="col-lg-6 d-none d-lg-block border-right py-4 pr-5 bg-primary rounded-left">
-                                <img className="img-fluid mt-5" src={LoginImg} />
+                                <img className="img-fluid mt-5" alt='' src={LoginImg} />
                             </div>
                             
                             <div className="col-lg-6 py-5 px-lg-5">
@@ -80,9 +157,13 @@ function LoginPage()
                                             placeholder="Enter email" 
                                             type="email"
                                             value={Email}
-                                            onChange={(e)=>setEmail(e.target.value)}
+                                            id = "Email"
+                                            onChange={(e)=>{setEmail(e.target.value);handleError(e.target.value,'email')}}
                                         />
+
+                                        <span id="email" style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"4px"}}> Email is required</span>
                                     </div>
+                                    &nbsp;&nbsp;
                                     
                                     <div className="form-group">
                                         <label>Password</label>
@@ -93,24 +174,34 @@ function LoginPage()
                                                 placeholder="Password" 
                                                 type="password"
                                                 value={Password}
-                                                onChange={(e)=>setPassword(e.target.value)}
-                                                id='password'  
+                                                onChange={(e)=>{setPassword(e.target.value);handleError(e.target.value,'password')}}
+                                                id='Password'  
                                             />
                                             
+
                                             <div className="input-group-append pointer">
                                                 <span className="input-group-text bg-white">
-                                                    <img style={{height: "18px" , width: "18px"}} style={{cursor:"pointer"}} onClick={showPassword} src={eyeImg}/>
+                                                    { ShowPass === false ?
+                                                        <BsFillEyeFill style={{cursor:"pointer"}} onClick={handleShowPassword}/>
+                                                        :
+                                                        <BsFillEyeSlashFill style={{cursor:"pointer"}} onClick={handleShowPassword}/>
+                                                    }
                                                 </span>
                                             </div>
+                                            
                                         </div>
+                                        <span id="password" style={{color:"red",display:"none",float:"left",fontSize:"12px",marginTop:"-10px"}}> Password is required</span>
                                         
-                                        <a className="text-secondary d-inline-block mt-3" routerlink="/auth/forgot-password" href="/auth/forgot-password">
-                                            Forgot password?
-                                        </a>
+                                        <div>
+                                            <a className="text-secondary d-inline-block mt-3" routerlink="/auth/forgot-password" href="/auth/forgot-password">
+                                                Forgot password?
+                                            </a>
+                                        </div>
                                     </div>
                                     
                                     <div className="d-flex">
-                                        <button className="btn btn-primary btn-block" type="submit">
+
+                                        <button className="btn btn-primary btn-block" id="btn" type="submit" onClick={handleSubmit}>
                                             Log In
                                         </button>
                                     </div>
@@ -120,10 +211,21 @@ function LoginPage()
                                             OR 
                                         </div>
                             
-                                        <button className="btn btn-light" type="button">
-                                            <img style={{height: "20px" , width:"20px" ,paddingRight:"4px"}} src={googleImg}/>
+                                        {/* <button className="btn btn-light" type="button">
+                                            <img style={{height: "20px" , width:"20px" ,paddingRight:"4px"}} alt='' src={googleImg}/>
                                                 Log in with Google 
-                                        </button>
+                                        </button> */}
+
+                                        <div className = "text-center">
+                                            <GoogleLogin 
+                                                clientId = "971623344603-0qquan9pcdb9iu7oq9genvpnel77i7oa.apps.googleusercontent.com"
+                                                buttonText = "Log in with Google"
+                                                onSuccess = {responseGoogle}
+                                                onFailure = {responseGoogle}
+                                                cookiePolicy = {'single_host_origin'}
+                                                
+                                            />
+                                        </div>
                                     </div>
                                 </form>
                             </div>
@@ -152,13 +254,11 @@ export default LoginPage
                         <h1 className="text-center">
                             <img style={{height:"70px",marginTop:"20px"}} className="img-fluid" src={AMlogo} />
                         </h1>
-
                         <div className="overlay-panel overlay-right">
                             <img style={{height:"70px",marginTop:"20px"}} className="img-fluid" src={AMlogo} />
                         </div>
                     </div>
                 </div>
-
                 <div className="form-container log-in-container">
                     <form action="#">
                         

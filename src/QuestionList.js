@@ -1,3 +1,4 @@
+
 import React,{useState,useEffect} from 'react'
 import {AiOutlinePlus} from 'react-icons/ai'
 import { useNavigate } from 'react-router-dom';
@@ -10,10 +11,10 @@ import { selectOptions } from '@testing-library/user-event/dist/select-options';
 import {BiX} from 'react-icons/bi'
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import NavBar from "./NavBar";
+import {WavePlaceholder} from './Loading';
 
-
-
-function QuestionList() {
+function QuestionList({display}) {
 
     let navigate = useNavigate()
     let [Questions,setQuestions] = useState([])
@@ -123,25 +124,29 @@ function QuestionList() {
 
     return (
     <>
+
+        {display===true ? 
+        <NavBar /> : <></>}   
+
         <div className='container '>
-            <div style={{fontWeight:'bold', fontSize:'26px',textAlign:'left',marginTop:"40px"}}>
+            <div style={{fontWeight:'bold', fontSize:'26px',marginTop:"40px",marginLeft:"28px"}}>
                     Questions
             </div>
 
-            <div style={{textAlign:'right',marginTop:"-40px"}}>
-                    <button type="button" className="btn btn-primary" onClick={()=>navigate('/AddQuestionForm')} style={{height:'40px',width:'160px',fontSize:'18px'}}>
+            <div style={{textAlign:'right',marginRight:"28px",marginTop:"-40px"}}>
+                    <button type="button" className="btn btn-primary" onClick={()=>navigate('/AddQuestionForm')} style={{height:'40px',width:'160px',fontSize:'16px'}}>
                         <AiOutlinePlus size={18} />  Add Question
                     </button>
             </div>
 
-            <div className="card text-center" style={{margin:'40px'}}>
+            <div className="card text-center" style={{margin:'30px'}}>
                 
             
                 <div className="card-body">
                     <div className="align-items-center">
                         <div className='form-row' style={{textAlign:"left"}}>
 
-                            <div className='form-group col-md-8'>
+                            <div className='form-group col-md-7'>
                                 <input data-toggle="tooltip" id="checkbox-2" title="Select all" type="checkbox" 
                                 style={{marginRight:"8px",marginTop:"16px"}}/>
                             
@@ -171,7 +176,7 @@ function QuestionList() {
                             className="form-control col-3" id="inputPassword2" placeholder="Search Question" onChange={(e)=>setSearchText(e.target.value)}/>
                         
                             
-                            <select className="d-flex form-control col-md-2" value={SelectedTopic.name ? SelectedTopic.name : 'DEFAULT'} onChange={(e)=>handleTopicChange(e.target.value)}  style={{marginTop:"8px",position:"relative"}} >
+                            <select className="form-control col-md-2" value={SelectedTopic.name ? SelectedTopic.name : 'DEFAULT'} onChange={(e)=>handleTopicChange(e.target.value)}  style={{marginTop:"8px",position:"relative"}} >
                                 <option value="DEFAULT" disabled hidden > Choose topic </option>
                             {Topic ? Topic.map((top)=>   
                                 (
@@ -180,7 +185,7 @@ function QuestionList() {
                             </select>
 
                             {SelectedTopic.name &&
-                                <span className="cancel" style={{position:"absolute",top:"38px",right:"0",marginRight: "70px",cursor:"pointer"}}> 
+                                <span className="cancel" style={{position:"absolute",top:"37px",right:"0",marginRight: "140px",cursor:"pointer"}}> 
                                     <BiX size={20} className='text-muted position-absolute'  
                                         onClick={()=>{
                                                         setloading(true)
@@ -267,8 +272,9 @@ function QuestionList() {
                         <div>
                             { Questions.length!==0 || loading ?
                                 (
-                                    <div className='spinner-border text-primary'>   
-                                    </div>
+                                    // <div className='spinner-border text-primary'>   
+                                    // </div>
+                                    <WavePlaceholder/>
                                 )
                                 :
                                 (

@@ -19,23 +19,42 @@ function App() {
       setDisplay(val)
     }
   
-  
+  const accessToken = JSON.parse(localStorage.getItem('token'))
+  const googleToken = JSON.parse(localStorage.getItem('googleToken'))
 
   return (
     <div className="App">
-      {display===true ? 
-      <NavBar /> : <></>}
-        <Router>
-          <Routes>
-              <Route path="*" element={<Navigate to ="/Login" />}/>
-              <Route path="/Login" element={<RecaptchaComponent />} />
-              <Route path="/QuestionList" element={<QuestionList />} />
-              <Route path="/AddQuestionForm" element={<AddQuestionForm handleDisplayNavbar={handleDisplayNavbar}/>} /> 
-              <Route path="/EditQuestionForm/:id" element={<EditQuestionForm handleDisplayNavbar={handleDisplayNavbar}/>} /> 
-          </Routes>
-      </Router>
-      
-      <Footer/>
+      {/* {display===true ? 
+      <NavBar /> : <></>} */}
+
+      { accessToken || googleToken ?
+      <>
+              <Router>
+                <Routes>
+                    <Route path="*" element={<Navigate to ="/QuestionList" />}/>
+                    <Route path="/QuestionList" element={<QuestionList display={display} />} />
+                    <Route path="/AddQuestionForm" element={<AddQuestionForm handleDisplayNavbar={handleDisplayNavbar} display={display}/>} /> 
+                    <Route path="/EditQuestionForm/:id" element={<EditQuestionForm handleDisplayNavbar={handleDisplayNavbar} display={display}/>} /> 
+                </Routes>
+              </Router>
+            
+            <Footer/> 
+      </>  
+       :
+        <>
+              <Router>
+                <Routes>
+                    <Route path="*" element={<Navigate to ="/Login" />}/>
+                    <Route path="/Login" element={<RecaptchaComponent />} />
+                    <Route path="/QuestionList" element={<QuestionList display={display} />} />
+                    <Route path="/AddQuestionForm" element={<AddQuestionForm handleDisplayNavbar={handleDisplayNavbar} display={display}/>} /> 
+                    <Route path="/EditQuestionForm/:id" element={<EditQuestionForm handleDisplayNavbar={handleDisplayNavbar} display={display}/>} /> 
+                </Routes>
+              </Router>
+            
+            <Footer/>
+        </>
+      }
     </div>
   );
 }

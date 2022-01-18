@@ -1,5 +1,5 @@
 import axios from "axios";
-import {authAxios} from "./api"
+import authAxios from "./api"
 
 const http = 
 {

@@ -176,14 +176,14 @@ function Form({QueObject,setQueObject,handleError,richText,setrichText})
         }
         else if((!hasText && QueObject.options[ind].richTextEditor === true) || val==="<p> </p>")
         {
-            console.log("hi1",val);
+           
             handleError(`Option${ind+1}`,'')
             val = ''
             QueObject.options[ind].option = val
             setQueObject({...QueObject})
         }
         else 
-        {console.log("hi2");
+        {
             handleError(`Option${ind+1}`,val)
             QueObject.options[ind].option = val
             setQueObject({...QueObject})
