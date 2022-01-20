@@ -462,7 +462,7 @@ function EditQuestionForm({handleDisplayNavbar,display})
     //------------------------------Post question into api after clicking on save question button-----------------------
     const editQuestion = async() =>
     {
-        // console.log(!hasAnyFieldEmpty());
+        console.log(!hasAnyFieldEmpty());
         
         if(!hasAnyFieldEmpty() && hasChecked === true)
         {
@@ -697,13 +697,13 @@ function EditQuestionForm({handleDisplayNavbar,display})
                                                     </textarea>
 
                                                     <div className='col-md-12' style={{textAlign:'left' , paddingLeft:'-10px',marginLeft:"-15px"}}>
-                                                        <a className='text-muted' href='/EditQuestionForm' style={{cursor:"pointer"}} onClick={() => RemoveOption(ind)}>
+                                                        <a className='text-muted' style={{cursor:"pointer"}} onClick={() => RemoveOption(ind)}>
                                                             Remove option 
                                                         </a> 
                                                         
                                                         <span className="text -muted"> | </span>
 
-                                                        <a _ngcontent-waj-c5="" href='/EditQuestionForm' className="text-muted" style={{cursor:"pointer"}} onClick={()=>{opt.richTextEditor = true ; setQueObject({...QueObject})}}>
+                                                        <a _ngcontent-waj-c5="" className="text-muted" style={{cursor:"pointer"}} onClick={()=>{opt.richTextEditor = true ; setQueObject({...QueObject})}}>
                                                             Enable Rich text editor
                                                         </a>
                                                     </div>  &nbsp;&nbsp; 
@@ -724,13 +724,13 @@ function EditQuestionForm({handleDisplayNavbar,display})
                                                     </div>
 
                                                     <div className='col-md-12' style={{textAlign:'left' , paddingLeft:'-10px',marginLeft:"-15px"}}>
-                                                        <a className='text-muted' href='/EditQuestionForm' style={{cursor:"pointer"}} onClick={() => RemoveOption(ind)}>
+                                                        <a className='text-muted' style={{cursor:"pointer"}} onClick={() => RemoveOption(ind)}>
                                                             Remove option 
                                                         </a> 
                                                         
                                                         <span className="text -muted"> | </span>
 
-                                                        <a  href='/EditQuestionForm' className="text-muted" style={{cursor:"pointer"}} onClick={()=>{opt.richTextEditor = false ; setQueObject({...QueObject})}}>
+                                                        <a className="text-muted" style={{cursor:"pointer"}} onClick={()=>{opt.richTextEditor = false ; setQueObject({...QueObject})}}>
                                                             Disable Rich text editor
                                                         </a>
                                                     </div>  &nbsp;&nbsp; 
